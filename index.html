@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hustler's Cabin — Member Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#05080c;
+    --panel:#0b1119;
+    --panel-2:#0f1826;
+    --line:#1c2a3a;
+    --cyan:#3fe3e0;
+    --cyan-dim:#1b6f6e;
+    --orange:#ff8a3d;
+    --text:#dce8ef;
+    --text-dim:#8ca2b3;
+    --danger:#ff5d5d;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--void);color:var(--text);font-family:'Inter',sans-serif;}
+  body{min-height:100vh;}
+  h1,h2,h3,.mono{font-family:'Orbitron',sans-serif;letter-spacing:.04em;}
+  ::selection{background:var(--cyan);color:#05080c;}
+  a{color:var(--cyan);}
+  .bg-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(63,227,224,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63,227,224,0.04) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(circle at 50% 30%, black, transparent 80%);
+  }
+  .glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:900px;height:900px;
+    background:radial-gradient(circle, rgba(63,227,224,0.10), transparent 60%);z-index:0;pointer-events:none;}
+
+  /* ---------- GATE ---------- */
+  #gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--void);}
+  .gate-box{position:relative;z-index:1;width:min(90vw,380px);text-align:center;}
+  .gate-mark{font-family:'Orbitron';font-weight:900;font-size:13px;letter-spacing:.35em;color:var(--cyan);opacity:.8;margin-bottom:6px;}
+  .gate-title{font-size:22px;font-weight:700;margin:0 0 6px;}
+  .gate-sub{color:var(--text-dim);font-size:13px;margin-bottom:28px;}
+  .code-row{display:flex;gap:8px;justify-content:center;margin-bottom:18px;}
+  .code-digit{width:44px;height:56px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    text-align:center;font-family:'Orbitron';font-size:24px;color:var(--cyan);outline:none;transition:border-color .15s, box-shadow .15s;}
+  .code-digit:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(63,227,224,0.15);}
+  .gate-error{color:var(--danger);font-size:12.5px;height:16px;margin-bottom:14px;}
+  .btn{
+    appearance:none;border:none;cursor:pointer;font-family:'Inter';font-weight:600;font-size:14px;
+    padding:13px 22px;border-radius:8px;transition:transform .1s, opacity .15s, box-shadow .15s;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(135deg,var(--cyan),#2bb8b6);color:#02191a;width:100%;box-shadow:0 0 24px rgba(63,227,224,0.18);}
+  .btn-primary:hover{box-shadow:0 0 32px rgba(63,227,224,0.32);}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text-dim);}
+  .btn-ghost:hover{border-color:var(--cyan-dim);color:var(--text);}
+  .btn-danger{background:transparent;border:1px solid rgba(255,93,93,.4);color:var(--danger);}
+
+  /* ---------- APP SHELL ---------- */
+  #app{display:none;position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 20px 80px;}
+  header.top{position:sticky;top:0;z-index:10;background:rgba(5,8,12,0.88);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+    margin:0 -20px 0;}
+  .brand{font-family:'Orbitron';font-weight:700;font-size:14px;letter-spacing:.08em;display:flex;align-items:center;gap:8px;}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+  .step-track{display:flex;gap:5px;}
+  .step-dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .2s, transform .2s;}
+  .step-dot.active{background:var(--cyan);transform:scale(1.25);}
+  .step-dot.done{background:var(--cyan-dim);}
+
+  .screen{display:none;padding:44px 0 10px;animation:rise .35s ease;}
+  .screen.active{display:block;}
+  @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  .eyebrow{color:var(--orange);font-family:'Orbitron';font-size:11px;letter-spacing:.25em;margin-bottom:10px;}
+  h2.screen-title{font-size:26px;margin:0 0 14px;line-height:1.25;}
+  .lede{color:var(--text-dim);font-size:15px;line-height:1.65;margin-bottom:30px;max-width:56ch;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
+  .card h3{font-size:13px;color:var(--cyan);margin:0 0 8px;letter-spacing:.05em;}
+  .card p{font-size:14px;color:var(--text-dim);line-height:1.6;margin:0;}
+
+  .role-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px;}
+  .role-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
+    display:flex;align-items:flex-start;gap:14px;}
+  .role-badge{font-family:'Orbitron';font-size:12px;font-weight:700;color:#02191a;background:var(--cyan);
+    border-radius:6px;padding:5px 8px;white-space:nowrap;flex-shrink:0;}
+  .role-badge.member{background:var(--orange);}
+  .role-name{font-weight:600;font-size:14.5px;margin:0 0 3px;}
+  .role-desc{font-size:13px;color:var(--text-dim);margin:0;line-height:1.55;}
+
+  .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px;}
+  .stat{flex:1;min-width:130px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;}
+  .stat .num{font-family:'Orbitron';font-size:20px;color:var(--cyan);}
+  .stat .lbl{font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+
+  .legal-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;max-height:340px;overflow-y:auto;font-size:13.5px;line-height:1.7;color:var(--text-dim);margin-bottom:16px;}
+  .legal-block h4{color:var(--text);font-family:'Orbitron';font-size:12px;letter-spacing:.05em;margin:18px 0 8px;}
+  .legal-block h4:first-child{margin-top:0;}
+  .legal-block::-webkit-scrollbar{width:6px;}
+  .legal-block::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;letter-spacing:.02em;}
+  .field input[type=text], .field input[type=email], .field select{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);
+    padding:12px 14px;font-size:14.5px;font-family:'Inter';outline:none;transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus{border-color:var(--cyan);}
+  .sig-input{font-family:'Georgia',serif;font-style:italic;font-size:22px !important;padding:16px 14px !important;}
+
+  .check-row{display:flex;align-items:flex-start;gap:10px;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;}
+  .check-row input{margin-top:3px;accent-color:var(--cyan);width:16px;height:16px;flex-shrink:0;}
+  .check-row span{font-size:13.5px;color:var(--text-dim);line-height:1.55;}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:32px;gap:10px;}
+  .nav-row .btn-primary{width:auto;min-width:150px;}
+
+  .amount-box{display:flex;align-items:baseline;gap:6px;background:var(--panel-2);border:1px solid var(--cyan-dim);
+    border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;}
+  .amount-box .sign{font-family:'Orbitron';font-size:22px;color:var(--orange);}
+  .amount-box .val{font-family:'Orbitron';font-size:38px;color:var(--cyan);}
+  .amount-box .desc{font-size:12.5px;color:var(--text-dim);margin-left:auto;text-align:right;max-width:180px;}
+
+  .confirm-wrap{text-align:center;padding:50px 0;}
+  .confirm-ring{width:70px;height:70px;border-radius:50%;border:2px solid var(--cyan);display:flex;align-items:center;
+    justify-content:center;margin:0 auto 22px;box-shadow:0 0 30px rgba(63,227,224,0.25);}
+  .confirm-ring svg{width:30px;height:30px;}
+  .signed-name{font-family:'Georgia',serif;font-style:italic;color:var(--cyan);font-size:22px;}
+
+  .err-text{color:var(--danger);font-size:12.5px;margin-top:6px;display:none;}
+  .footer-note{color:var(--text-dim);opacity:.5;font-size:11px;text-align:center;margin-top:50px;letter-spacing:.03em;}
+
+  @media(max-width:520px){
+    .amount-box{flex-wrap:wrap;} .amount-box .desc{text-align:left;margin-left:0;}
+    .nav-row{flex-direction:column-reverse;align-items:stretch;}
+    .nav-row .btn{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<audio id="bgMusic" src="ambition.mp3" loop preload="auto"></audio>
+
+<div class="bg-grid"></div>
+<div class="glow"></div>
+
+<!-- ================= GATE ================= -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-mark">ANDRE METHOD</div>
+    <h1 class="gate-title">Hustler's Cabin</h1>
+    <p class="gate-sub">Private access. Enter your invitation code to continue.</p>
+    <div class="code-row" id="codeRow">
+      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="0">
+      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="1">
+      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="2">
+      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="3">
+    </div>
+    <div class="gate-error" id="gateError"></div>
+    <button class="btn btn-primary" id="gateBtn" disabled>Unlock</button>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="dot"></span> HUSTLER'S CABIN</div>
+    <div class="step-track" id="stepTrack"></div>
+  </header>
+
+  <!-- SCREEN 0: WELCOME -->
+  <section class="screen" data-screen="0">
+    <div class="eyebrow">START HERE</div>
+    <h2 class="screen-title">A member-funded lending pool, built and owned by its members.</h2>
+    <p class="lede">This walkthrough explains how Hustler's Cabin works, who does what, and what you're agreeing to before you join. It takes about five minutes.</p>
+
+    <div class="stat-row">
+      <div class="stat"><div class="num">8</div><div class="lbl">Members per team</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl">Admins per team</div></div>
+      <div class="stat"><div class="num">$25</div><div class="lbl">One-time investment</div></div>
+    </div>
+
+    <div class="card">
+      <h3>WHAT THIS IS</h3>
+      <p>A small, private group pools capital to fund short-term loans. Returns come from voluntary tips, not fixed interest. This is a member-owned collective — not a public offering, and not a bank.</p>
+    </div>
+    <div class="card">
+      <h3>WHAT THIS ISN'T</h3>
+      <p>This tool does not disclose scoring logic, funding criteria, or internal operating methods. Those stay with the team's admins. This walkthrough covers structure and terms only.</p>
+    </div>
+
+    <div class="nav-row">
+      <span></span>
+      <button class="btn btn-primary" onclick="goTo(1)">Begin Walkthrough →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 1: TEAM STRUCTURE -->
+  <section class="screen" data-screen="1">
+    <div class="eyebrow">STEP 1 OF 5</div>
+    <h2 class="screen-title">How a team is built</h2>
+    <p class="lede">Every Hustler's Cabin team is capped at 8 seats. Right now, only one team is active — once it's full, a new team forms.</p>
+
+    <div class="role-grid">
+      <div class="role-card">
+        <div class="role-badge">ADMIN</div>
+        <div>
+          <p class="role-name">Admin (3 seats)</p>
+          <p class="role-desc">Oversees the pool, holds banking authority, and approves fund movement. Every transfer requires two of the three admins to sign off — no single admin can move money alone.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">ADMIN</div>
+        <div>
+          <p class="role-name">Loan Manager</p>
+          <p class="role-desc">One of the three admins also carries this role. They source and evaluate loan opportunities and bring recommendations to the group — but still can't move funds without a second admin's approval.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge member">MEMBER</div>
+        <div>
+          <p class="role-name">Member (5 seats)</p>
+          <p class="role-desc">Owns a share of the pool, votes on major decisions, and has visibility into performance. Members don't manage funds directly but share in how the pool grows.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>WHY DUAL APPROVAL</h3>
+      <p>Separating "who finds the loan" from "who releases the money" keeps any one person from controlling the pool's funds alone. It's the core safeguard behind every transfer.</p>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goTo(0)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(2)">Next →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: MONEY -->
+  <section class="screen" data-screen="2">
+    <div class="eyebrow">STEP 2 OF 5</div>
+    <h2 class="screen-title">Your investment</h2>
+    <p class="lede">Joining a team requires a single, one-time contribution. There is no recurring fee and no additional required investment beyond this amount.</p>
+
+    <div class="amount-box">
+      <span class="sign">$</span><span class="val">25</span>
+      <span class="desc">One-time. Not recurring. No further required contribution.</span>
+    </div>
+
+    <div class="card">
+      <h3>WHERE IT GOES</h3>
+      <p>Your contribution joins the shared operating pool, which funds member-approved loans. Profits stay in the pool to grow lending capacity until the group votes to begin distributions.</p>
+    </div>
+    <div class="card">
+      <h3>RETURNS ARE NOT GUARANTEED</h3>
+      <p>This is a private investment among members, not a savings product. Borrowers can default. Value depends on the pool's performance, not a fixed rate.</p>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Next →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: LEGAL + NON-COMPETE -->
+  <section class="screen" data-screen="3">
+    <div class="eyebrow">STEP 3 OF 5</div>
+    <h2 class="screen-title">Terms & non-compete</h2>
+    <p class="lede">Read the terms below in full. You'll sign digitally on the next screen.</p>
+
+    <div class="legal-block">
+      <h4>1. NATURE OF PARTICIPATION</h4>
+      <p>Hustler's Cabin is a private, member-funded lending pool. Membership is by invitation only and is not offered to the general public. Participation is not a deposit account, is not FDIC insured, and does not guarantee any return of principal or profit.</p>
+
+      <h4>2. GOVERNANCE</h4>
+      <p>Each team consists of up to eight (8) members, including three (3) Admins. One Admin also serves as Loan Manager. No single Admin may authorize the movement of pooled funds; all transfers require approval from at least two (2) Admins.</p>
+
+      <h4>3. CONTRIBUTION</h4>
+      <p>Membership requires a one-time contribution of $25 USD. This is the sole required investment; no further contribution is required to maintain membership.</p>
+
+      <h4>4. CONFIDENTIALITY</h4>
+      <p>Members will not have access to, and this system will not disclose, internal loan-scoring methodology, underwriting criteria, or operational processes used by the team's Admins. This information is treated as confidential and proprietary to the team.</p>
+
+      <h4>5. NON-COMPETE & NON-SOLICITATION</h4>
+      <p>By signing below, the undersigned agrees that, during their membership and for a period of twelve (12) months following their exit from the pool, they will not: (a) form, join, or advise a competing member-funded lending pool that solicits current Hustler's Cabin members or admins; (b) solicit current members, admins, or borrowers of Hustler's Cabin to join a competing venture; or (c) use any confidential methodology, scoring logic, documentation, or operational process learned through participation in Hustler's Cabin to build or support a competing venture.</p>
+
+      <h4>6. RISK ACKNOWLEDGMENT</h4>
+      <p>The undersigned acknowledges that pooled funds are used to fund loans to third parties, that borrowers may default, and that the value of their membership interest may rise, fall, or be lost entirely. This is not a guaranteed-return product.</p>
+
+      <h4>7. GOVERNING TERMS</h4>
+      <p>This agreement, together with the team's Operating Agreement (provided separately by the Admins), governs the member's participation in the pool. Nothing in this walkthrough constitutes legal, tax, or investment advice.</p>
+    </div>
+
+    <div class="check-row" onclick="toggleCheck(this)">
+      <input type="checkbox" id="chk1">
+      <span>I have read and understand the terms above, including Section 5, the non-compete and non-solicitation clause.</span>
+    </div>
+    <div class="check-row" onclick="toggleCheck(this)">
+      <input type="checkbox" id="chk2">
+      <span>I understand this is a private investment with no guaranteed return, and my $25 contribution may be lost.</span>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" id="toSignBtn" onclick="tryGoSign()" disabled>Continue to Signature →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: SIGN -->
+  <section class="screen" data-screen="4">
+    <div class="eyebrow">STEP 4 OF 5</div>
+    <h2 class="screen-title">Digital signature</h2>
+    <p class="lede">Enter your legal name and details exactly as you'd like them recorded. Typing your name below and submitting acts as your binding electronic signature on the terms in Step 3.</p>
+
+    <form id="signForm">
+      <div class="field">
+        <label>FULL LEGAL NAME</label>
+        <input type="text" name="full_name" id="fullName" required placeholder="Jordan A. Rivers">
+      </div>
+      <div class="field">
+        <label>EMAIL ADDRESS</label>
+        <input type="email" name="email" id="email" required placeholder="you@email.com">
+      </div>
+      <div class="field">
+        <label>REQUESTING ROLE</label>
+        <select name="requested_role" id="role" required>
+          <option value="" disabled selected>Select a role</option>
+          <option value="Member">Member</option>
+          <option value="Admin">Admin (subject to team approval)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>TYPE YOUR FULL NAME TO SIGN</label>
+        <input type="text" class="sig-input" name="signature" id="signature" required placeholder="Your signature">
+        <div class="err-text" id="sigErr">Signature must match your full legal name above.</div>
+      </div>
+      <input type="hidden" name="agreement_version" value="Hustler's Cabin Member Terms v1 — $25 one-time, non-compete Section 5">
+      <input type="hidden" name="date_signed" id="dateSigned">
+      <input type="hidden" name="full_agreement_text" id="fullAgreementText">
+    </form>
+
+    <div class="check-row" onclick="toggleCheck(this)">
+      <input type="checkbox" id="chk3">
+      <span>By typing my name above, I am electronically signing this agreement and confirm it has the same legal effect as a handwritten signature.</span>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitForm()" disabled>Sign & Submit</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 5: CONFIRM -->
+  <section class="screen" data-screen="5">
+    <div class="confirm-wrap">
+      <div class="confirm-ring">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="#3fe3e0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2 class="screen-title" style="text-align:center;">Agreement submitted</h2>
+      <p class="lede" style="margin:0 auto 8px;text-align:center;">Signed electronically by</p>
+      <p class="signed-name" id="signedNameDisplay"></p>
+      <p class="lede" style="margin:24px auto 0;text-align:center;">An admin will follow up with next steps for your $25 contribution and team placement.</p>
+    </div>
+  </section>
+
+  <div class="footer-note">HUSTLER'S CABIN — ANDRE METHOD — PRIVATE MEMBER SYSTEM</div>
+</div>
+
+<script>
+  // ---- GATE ----
+  const CODE = "7777";
+  const digits = document.querySelectorAll('.code-digit');
+  const gateBtn = document.getElementById('gateBtn');
+  const gateError = document.getElementById('gateError');
+
+  digits.forEach((d,idx)=>{
+    d.addEventListener('input',()=>{
+      d.value = d.value.replace(/[^0-9]/g,'').slice(0,1);
+      if(d.value && idx < digits.length-1){ digits[idx+1].focus(); }
+      checkCode();
+    });
+    d.addEventListener('keydown',(e)=>{
+      if(e.key==='Backspace' && !d.value && idx>0){ digits[idx-1].focus(); }
+    });
+  });
+
+  function checkCode(){
+    const val = Array.from(digits).map(d=>d.value).join('');
+    gateBtn.disabled = val.length !== 4;
+  }
+
+  function unlock(){
+    const val = Array.from(digits).map(d=>d.value).join('');
+    if(val === CODE){
+      document.getElementById('gate').style.display='none';
+      document.getElementById('app').style.display='block';
+      const music = document.getElementById('bgMusic');
+      music.volume = 0.35;
+      music.play().catch(()=>{});
+      buildSteps();
+    } else {
+      gateError.textContent = 'Incorrect code. Try again.';
+      digits.forEach(d=>d.value='');
+      digits[0].focus();
+      gateBtn.disabled = true;
+    }
+  }
+  gateBtn.addEventListener('click', unlock);
+  digits[digits.length-1].addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !gateBtn.disabled){ unlock(); } });
+
+  // ---- STEP TRACK ----
+  const TOTAL_STEPS = 6; // 0-5
+  let current = 0;
+  function buildSteps(){
+    const track = document.getElementById('stepTrack');
+    track.innerHTML = '';
+    for(let i=0;i<TOTAL_STEPS;i++){
+      const dot = document.createElement('div');
+      dot.className = 'step-dot';
+      track.appendChild(dot);
+    }
+    renderSteps();
+    goTo(0);
+  }
+  function renderSteps(){
+    const dots = document.querySelectorAll('.step-dot');
+    dots.forEach((d,i)=>{
+      d.classList.toggle('active', i===current);
+      d.classList.toggle('done', i<current);
+    });
+  }
+  function goTo(n){
+    current = n;
+    document.querySelectorAll('.screen').forEach(s=>{
+      s.classList.toggle('active', parseInt(s.dataset.screen)===n);
+    });
+    renderSteps();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  // ---- CHECKBOXES ----
+  function toggleCheck(row){
+    const cb = row.querySelector('input[type=checkbox]');
+    cb.checked = !cb.checked;
+    evaluateChecks();
+  }
+  function evaluateChecks(){
+    const c1 = document.getElementById('chk1');
+    const c2 = document.getElementById('chk2');
+    if(c1 && c2){
+      document.getElementById('toSignBtn').disabled = !(c1.checked && c2.checked);
+    }
+    const c3 = document.getElementById('chk3');
+    if(c3){ validateSignReady(); }
+  }
+  document.addEventListener('change', (e)=>{
+    if(e.target.matches('#chk1,#chk2,#chk3')) evaluateChecks();
+  });
+
+  function tryGoSign(){ goTo(4); }
+
+  // ---- SIGNATURE VALIDATION ----
+  function validateSignReady(){
+    const name = document.getElementById('fullName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const role = document.getElementById('role').value;
+    const sig = document.getElementById('signature').value.trim();
+    const c3 = document.getElementById('chk3').checked;
+    const sigErr = document.getElementById('sigErr');
+
+    const sigMatches = name && sig && name.toLowerCase() === sig.toLowerCase();
+    sigErr.style.display = (sig && !sigMatches) ? 'block' : 'none';
+
+    const ready = name && email && role && sigMatches && c3;
+    document.getElementById('submitBtn').disabled = !ready;
+  }
+  ['fullName','email','role','signature'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', validateSignReady);
+    document.getElementById(id).addEventListener('change', validateSignReady);
+  });
+
+  // ---- SUBMIT ----
+  function submitForm(){
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    document.getElementById('dateSigned').value = new Date().toISOString();
+    document.getElementById('fullAgreementText').value =
+      document.querySelector('.legal-block').innerText.replace(/\s+/g,' ').trim();
+
+    const form = document.getElementById('signForm');
+    const data = new FormData(form);
+
+    fetch('https://formspree.io/f/xzdngbln', {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' }
+    }).then(res=>{
+      document.getElementById('signedNameDisplay').textContent = document.getElementById('fullName').value.trim();
+      goTo(5);
+    }).catch(()=>{
+      btn.disabled = false;
+      btn.textContent = 'Sign & Submit';
+      alert('Submission failed. Please check your connection and try again.');
+    });
+  }
+</script>
+
+</body>
+</html>
