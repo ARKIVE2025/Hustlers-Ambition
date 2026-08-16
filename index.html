@@ -6,6 +6,20 @@
 <title>Hustler's Cabin — Member Access</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBvKsoZvGIUpffz1-tjQv-Xx5hA4sx-OIY",
+  authDomain: "hustlersball-eaf4e.firebaseapp.com",
+  projectId: "hustlersball-eaf4e",
+  storageBucket: "hustlersball-eaf4e.firebasestorage.app",
+  messagingSenderId: "421761462382",
+  appId: "1:421761462382:web:c17e627b97307db3b3367f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
 <style>
   :root{
     --void:#05080c;
@@ -182,9 +196,9 @@
     <p class="lede">This walkthrough explains how Hustler's Cabin works, who does what, and what you're agreeing to before you join. It takes about five minutes.</p>
 
     <div class="stat-row">
-      <div class="stat"><div class="num">8</div><div class="lbl">Members per team</div></div>
+      <div class="stat"><div class="num">25</div><div class="lbl">Members per team</div></div>
       <div class="stat"><div class="num">3</div><div class="lbl">Admins per team</div></div>
-      <div class="stat"><div class="num">$25</div><div class="lbl">One-time investment</div></div>
+      <div class="stat"><div class="num" id="welcomeSharePrice">$—</div><div class="lbl">Current share price</div></div>
     </div>
 
     <div class="card">
@@ -204,9 +218,9 @@
 
   <!-- SCREEN 1: TEAM STRUCTURE -->
   <section class="screen" data-screen="1">
-    <div class="eyebrow">STEP 1 OF 5</div>
+    <div class="eyebrow">STEP 1 OF 6</div>
     <h2 class="screen-title">How a team is built</h2>
-    <p class="lede">Every Hustler's Cabin team is capped at 8 seats. Right now, only one team is active — once it's full, a new team forms.</p>
+    <p class="lede">Every Hustler's Cabin team is capped at 25 seats. Right now, only one team is active — once it's full, a new team forms.</p>
 
     <div class="role-grid">
       <div class="role-card">
@@ -226,8 +240,8 @@
       <div class="role-card">
         <div class="role-badge member">MEMBER</div>
         <div>
-          <p class="role-name">Member (5 seats)</p>
-          <p class="role-desc">Owns a share of the pool, votes on major decisions, and has visibility into performance. Members don't manage funds directly but share in how the pool grows.</p>
+          <p class="role-name">Member (22 seats)</p>
+          <p class="role-desc">Owns shares of the pool, votes on major decisions, and has visibility into performance. Members don't manage funds directly but share in how the pool grows — and can buy additional shares at the current price at any time.</p>
         </div>
       </div>
     </div>
@@ -243,24 +257,51 @@
     </div>
   </section>
 
-  <!-- SCREEN 2: MONEY -->
+  <!-- SCREEN 2: RULES -->
   <section class="screen" data-screen="2">
-    <div class="eyebrow">STEP 2 OF 5</div>
-    <h2 class="screen-title">Your investment</h2>
-    <p class="lede">Joining a team requires a single, one-time contribution. There is no recurring fee and no additional required investment beyond this amount.</p>
+    <div class="eyebrow">STEP 2 OF 6</div>
+    <h2 class="screen-title">The Rules</h2>
+    <p class="lede">We operate on three pillars. Every member — Admin or not — is held to the same standard.</p>
 
-    <div class="amount-box">
-      <span class="sign">$</span><span class="val">25</span>
-      <span class="desc">One-time. Not recurring. No further required contribution.</span>
+    <div class="role-grid">
+      <div class="role-card">
+        <div class="role-badge">01</div>
+        <div>
+          <p class="role-name">Discipline</p>
+          <p class="role-desc">Stay focused. Do what's required.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">02</div>
+        <div>
+          <p class="role-name">Oneness</p>
+          <p class="role-desc">We before me. One cabin, one mission.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">03</div>
+        <div>
+          <p class="role-name">Communication</p>
+          <p class="role-desc">Speak up. Listen. Align. Act.</p>
+        </div>
+      </div>
     </div>
 
     <div class="card">
-      <h3>WHERE IT GOES</h3>
-      <p>Your contribution joins the shared operating pool, which funds member-approved loans. Profits stay in the pool to grow lending capacity until the group votes to begin distributions.</p>
+      <h3>DECLARATION OF COMMITMENT (DOC)</h3>
+      <p>
+        1. I will show up on time and prepared.<br>
+        2. I will stay disciplined and follow through.<br>
+        3. I will put the team first and protect the vision.<br>
+        4. I will communicate openly, honestly, and respectfully.<br>
+        5. I will hold myself and others accountable.<br>
+        6. I will maintain confidentiality and protect the Cabin.
+      </p>
     </div>
+
     <div class="card">
-      <h3>RETURNS ARE NOT GUARANTEED</h3>
-      <p>This is a private investment among members, not a savings product. Borrowers can default. Value depends on the pool's performance, not a fixed rate.</p>
+      <h3>A DECLARATION TO THE CABIN</h3>
+      <p>I accept these rules and commit to upholding the standards of Hustler's Cabin. I understand that our strength comes from our discipline, our oneness, and our communication. I'm all in. This is the standard. This is the Cabin.</p>
     </div>
 
     <div class="nav-row">
@@ -269,9 +310,90 @@
     </div>
   </section>
 
-  <!-- SCREEN 3: LEGAL + NON-COMPETE -->
+  <!-- SCREEN 3: GOALS -->
   <section class="screen" data-screen="3">
-    <div class="eyebrow">STEP 3 OF 5</div>
+    <div class="eyebrow">STEP 3 OF 6</div>
+    <h2 class="screen-title">Where we're headed — Phase 1</h2>
+    <p class="lede">Growth is measured in loans funded, not dollars. Here's the ramp for our first year.</p>
+
+    <div class="role-grid" id="goalsGrid">
+      <div class="role-card">
+        <div class="role-badge">MONTH 1</div>
+        <div>
+          <p class="role-name">6 loans funded</p>
+          <p class="role-desc">Complete.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">AUGUST</div>
+        <div>
+          <p class="role-name">Goal: 8 loans</p>
+          <p class="role-desc">Current month.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">NEXT</div>
+        <div>
+          <p class="role-name">Goal: 12 loans</p>
+          <p class="role-desc">Following month.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">THEN</div>
+        <div>
+          <p class="role-name">Goal: 16 loans</p>
+          <p class="role-desc">Month after that.</p>
+        </div>
+      </div>
+      <div class="role-card">
+        <div class="role-badge">PHASE 1 CAP</div>
+        <div>
+          <p class="role-name">20 loans max</p>
+          <p class="role-desc">The ceiling for Phase 1. Once we hit 20, the Cabin reevaluates before moving beyond it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>WHY A CAP</h3>
+      <p>Scaling loan volume faster than the pool's capital and vetting process can support raises risk for everyone. Twenty loans is the ceiling for this phase — after that, admins reassess before growing further.</p>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Next →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: MONEY -->
+  <section class="screen" data-screen="4">
+    <div class="eyebrow">STEP 4 OF 6</div>
+    <h2 class="screen-title">Your investment</h2>
+    <p class="lede">Joining a team requires a single, one-time contribution at the current share price. There is no recurring fee, though you're welcome to buy additional shares later at whatever the price is then.</p>
+
+    <div class="amount-box">
+      <span class="sign">$</span><span class="val" id="sharePriceVal">—</span>
+      <span class="desc" id="sharePriceDesc">One-time, at today's share price. Loading live price…</span>
+    </div>
+
+    <div class="card">
+      <h3>WHERE IT GOES</h3>
+      <p>Your contribution joins the shared operating pool, which funds member-approved loans. Profits stay in the pool to grow lending capacity until the group votes to begin distributions.</p>
+    </div>
+    <div class="card">
+      <h3>RETURNS ARE NOT GUARANTEED</h3>
+      <p>This is a private investment among members, not a savings product. Borrowers can default. Value depends on the pool's performance, not a fixed rate. Share price moves with the pool — it can rise or fall.</p>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(5)">Next →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 5: LEGAL + NON-COMPETE -->
+  <section class="screen" data-screen="5">
+    <div class="eyebrow">STEP 5 OF 6</div>
     <h2 class="screen-title">Terms & non-compete</h2>
     <p class="lede">Read the terms below in full. You'll sign digitally on the next screen.</p>
 
@@ -280,10 +402,10 @@
       <p>Hustler's Cabin is a private, member-funded lending pool. Membership is by invitation only and is not offered to the general public. Participation is not a deposit account, is not FDIC insured, and does not guarantee any return of principal or profit.</p>
 
       <h4>2. GOVERNANCE</h4>
-      <p>Each team consists of up to eight (8) members, including three (3) Admins. One Admin also serves as Loan Manager. No single Admin may authorize the movement of pooled funds; all transfers require approval from at least two (2) Admins.</p>
+      <p>Each team consists of up to twenty-five (25) members, including three (3) Admins, one of whom also serves as Loan Manager. No single Admin may authorize the movement of pooled funds; all transfers require approval from at least two (2) Admins.</p>
 
       <h4>3. CONTRIBUTION</h4>
-      <p>Membership requires a one-time contribution of $25 USD. This is the sole required investment; no further contribution is required to maintain membership.</p>
+      <p>Membership requires a one-time contribution equal to the current share price at the time of signing, as displayed in Step 4. This is the required investment to join; no further contribution is required to maintain membership, though members may purchase additional shares later at the then-current price.</p>
 
       <h4>4. CONFIDENTIALITY</h4>
       <p>Members will not have access to, and this system will not disclose, internal loan-scoring methodology, underwriting criteria, or operational processes used by the team's Admins. This information is treated as confidential and proprietary to the team.</p>
@@ -292,7 +414,7 @@
       <p>By signing below, the undersigned agrees that, during their membership and for a period of twelve (12) months following their exit from the pool, they will not: (a) form, join, or advise a competing member-funded lending pool that solicits current Hustler's Cabin members or admins; (b) solicit current members, admins, or borrowers of Hustler's Cabin to join a competing venture; or (c) use any confidential methodology, scoring logic, documentation, or operational process learned through participation in Hustler's Cabin to build or support a competing venture.</p>
 
       <h4>6. RISK ACKNOWLEDGMENT</h4>
-      <p>The undersigned acknowledges that pooled funds are used to fund loans to third parties, that borrowers may default, and that the value of their membership interest may rise, fall, or be lost entirely. This is not a guaranteed-return product.</p>
+      <p>The undersigned acknowledges that pooled funds are used to fund loans to third parties, that borrowers may default, and that the value of their membership interest — and the share price — may rise, fall, or be lost entirely. This is not a guaranteed-return product.</p>
 
       <h4>7. GOVERNING TERMS</h4>
       <p>This agreement, together with the team's Operating Agreement (provided separately by the Admins), governs the member's participation in the pool. Nothing in this walkthrough constitutes legal, tax, or investment advice.</p>
@@ -304,20 +426,20 @@
     </div>
     <div class="check-row" onclick="toggleCheck(this)">
       <input type="checkbox" id="chk2">
-      <span>I understand this is a private investment with no guaranteed return, and my $25 contribution may be lost.</span>
+      <span>I understand this is a private investment with no guaranteed return, and my contribution may be lost.</span>
     </div>
 
     <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-ghost" onclick="goTo(4)">← Back</button>
       <button class="btn btn-primary" id="toSignBtn" onclick="tryGoSign()" disabled>Continue to Signature →</button>
     </div>
   </section>
 
-  <!-- SCREEN 4: SIGN -->
-  <section class="screen" data-screen="4">
-    <div class="eyebrow">STEP 4 OF 5</div>
+  <!-- SCREEN 6: SIGN -->
+  <section class="screen" data-screen="6">
+    <div class="eyebrow">STEP 6 OF 6</div>
     <h2 class="screen-title">Digital signature</h2>
-    <p class="lede">Enter your legal name and details exactly as you'd like them recorded. Typing your name below and submitting acts as your binding electronic signature on the terms in Step 3.</p>
+    <p class="lede">Enter your legal name and details exactly as you'd like them recorded. Typing your name below and submitting acts as your binding electronic signature on the terms in Step 5.</p>
 
     <form id="signForm">
       <div class="field">
@@ -341,7 +463,8 @@
         <input type="text" class="sig-input" name="signature" id="signature" required placeholder="Your signature">
         <div class="err-text" id="sigErr">Signature must match your full legal name above.</div>
       </div>
-      <input type="hidden" name="agreement_version" value="Hustler's Cabin Member Terms v1 — $25 one-time, non-compete Section 5">
+      <input type="hidden" name="agreement_version" id="agreementVersion" value="Hustler's Cabin Member Terms v2 — share-price entry, 25-seat teams, non-compete Section 5">
+      <input type="hidden" name="share_price_at_signing" id="sharePriceField">
       <input type="hidden" name="date_signed" id="dateSigned">
       <input type="hidden" name="full_agreement_text" id="fullAgreementText">
     </form>
@@ -352,13 +475,13 @@
     </div>
 
     <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-ghost" onclick="goTo(5)">← Back</button>
       <button class="btn btn-primary" id="submitBtn" onclick="submitForm()" disabled>Sign & Submit</button>
     </div>
   </section>
 
-  <!-- SCREEN 5: CONFIRM -->
-  <section class="screen" data-screen="5">
+  <!-- SCREEN 7: CONFIRM -->
+  <section class="screen" data-screen="7">
     <div class="confirm-wrap">
       <div class="confirm-ring">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="#3fe3e0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -366,7 +489,7 @@
       <h2 class="screen-title" style="text-align:center;">Agreement submitted</h2>
       <p class="lede" style="margin:0 auto 8px;text-align:center;">Signed electronically by</p>
       <p class="signed-name" id="signedNameDisplay"></p>
-      <p class="lede" style="margin:24px auto 0;text-align:center;">An admin will follow up with next steps for your $25 contribution and team placement.</p>
+      <p class="lede" style="margin:24px auto 0;text-align:center;">An admin will follow up with next steps for your contribution and team placement.</p>
     </div>
   </section>
 
@@ -405,6 +528,7 @@
       music.volume = 0.35;
       music.play().catch(()=>{});
       buildSteps();
+      loadSharePrice();
     } else {
       gateError.textContent = 'Incorrect code. Try again.';
       digits.forEach(d=>d.value='');
@@ -415,8 +539,54 @@
   gateBtn.addEventListener('click', unlock);
   digits[digits.length-1].addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !gateBtn.disabled){ unlock(); } });
 
+  // ---- LIVE SHARE PRICE (mirrors main app's NAV formula) ----
+  const ENTRY_PRICE = 25; // fixed historical entry price, used as fallback basis
+  let currentSharePrice = null;
+
+  function loadSharePrice(){
+    db.collection('state').doc('main').get().then(doc => {
+      if(!doc.exists){ showSharePriceFallback(); return; }
+      const data = doc.data();
+      const users = data.users || [];
+      const totalContributions = users.reduce((s,u)=> s + (u.contribution || 0), 0);
+      const totalProfit = users.reduce((s,u)=> s + (u.totalProfit || 0), 0);
+      const poolTotal = totalContributions + totalProfit;
+      const totalShares = users.reduce((s,u)=> {
+        if (typeof u.shares === 'number') return s + u.shares;
+        return s + ((u.contribution || 0) / ENTRY_PRICE);
+      }, 0);
+      currentSharePrice = totalShares > 0 ? (poolTotal / totalShares) : ENTRY_PRICE;
+      renderSharePrice();
+    }).catch(()=> showSharePriceFallback());
+  }
+
+  function renderSharePrice(){
+    const price = currentSharePrice != null ? currentSharePrice : ENTRY_PRICE;
+    const priceStr = price.toFixed(2);
+    const welcomeEl = document.getElementById('welcomeSharePrice');
+    if(welcomeEl) welcomeEl.textContent = '$' + priceStr;
+    const valEl = document.getElementById('sharePriceVal');
+    if(valEl) valEl.textContent = priceStr;
+    const descEl = document.getElementById('sharePriceDesc');
+    if(descEl) descEl.textContent = 'One-time, at today\'s live share price. This number updates as the pool grows.';
+    const field = document.getElementById('sharePriceField');
+    if(field) field.value = '$' + priceStr;
+  }
+
+  function showSharePriceFallback(){
+    currentSharePrice = ENTRY_PRICE;
+    const welcomeEl = document.getElementById('welcomeSharePrice');
+    if(welcomeEl) welcomeEl.textContent = '$' + ENTRY_PRICE.toFixed(2);
+    const valEl = document.getElementById('sharePriceVal');
+    if(valEl) valEl.textContent = ENTRY_PRICE.toFixed(2);
+    const descEl = document.getElementById('sharePriceDesc');
+    if(descEl) descEl.textContent = 'Could not reach the live pool — showing the base entry price. An admin will confirm the exact amount.';
+    const field = document.getElementById('sharePriceField');
+    if(field) field.value = '$' + ENTRY_PRICE.toFixed(2) + ' (fallback, live price unavailable)';
+  }
+
   // ---- STEP TRACK ----
-  const TOTAL_STEPS = 6; // 0-5
+  const TOTAL_STEPS = 8; // 0-7
   let current = 0;
   function buildSteps(){
     const track = document.getElementById('stepTrack');
@@ -464,7 +634,7 @@
     if(e.target.matches('#chk1,#chk2,#chk3')) evaluateChecks();
   });
 
-  function tryGoSign(){ goTo(4); }
+  function tryGoSign(){ goTo(6); }
 
   // ---- SIGNATURE VALIDATION ----
   function validateSignReady(){
@@ -492,24 +662,33 @@
     btn.disabled = true;
     btn.textContent = 'Submitting…';
 
-    document.getElementById('dateSigned').value = new Date().toISOString();
+    const nowIso = new Date().toISOString();
+    document.getElementById('dateSigned').value = nowIso;
     document.getElementById('fullAgreementText').value =
       document.querySelector('.legal-block').innerText.replace(/\s+/g,' ').trim();
 
     const form = document.getElementById('signForm');
     const data = new FormData(form);
+    const record = Object.fromEntries(data.entries());
+    record.date_signed = nowIso;
+    record.submitted_via = 'onboarding-v2';
 
-    fetch('https://formspree.io/f/xzdngbln', {
-      method: 'POST',
-      body: data,
-      headers: { 'Accept': 'application/json' }
-    }).then(res=>{
+    // Primary: write directly to Firestore so we never lose a signup, even if Formspree fails.
+    db.collection('signups').add(record).then(() => {
       document.getElementById('signedNameDisplay').textContent = document.getElementById('fullName').value.trim();
-      goTo(5);
-    }).catch(()=>{
+      goTo(7);
+
+      // Best-effort: also notify via Formspree, but don't block confirmation on it.
+      fetch('https://formspree.io/f/xzdngbln', {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      }).catch(()=>{ /* Firestore already has the record; Formspree is just a notification */ });
+
+    }).catch((err) => {
       btn.disabled = false;
       btn.textContent = 'Sign & Submit';
-      alert('Submission failed. Please check your connection and try again.');
+      alert('Submission failed to save (' + (err && err.message ? err.message : 'connection error') + '). Please check your connection and try again.');
     });
   }
 </script>
