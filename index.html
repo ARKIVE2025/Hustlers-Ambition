@@ -539,7 +539,7 @@ const db = firebase.firestore();
   gateBtn.addEventListener('click', unlock);
   digits[digits.length-1].addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !gateBtn.disabled){ unlock(); } });
 
-  // ---- LIVE SHARE PRICE (mirrors main app's NAV formula) ----
+  // ---- LIVE SHARE PRICE (mirrors main app's NAV formula exactly) ----
   const ENTRY_PRICE = 25; // fixed historical entry price, used as fallback basis
   let currentSharePrice = null;
 
@@ -548,13 +548,28 @@ const db = firebase.firestore();
       if(!doc.exists){ showSharePriceFallback(); return; }
       const data = doc.data();
       const users = data.users || [];
+      const adjustments = data.adjustments || [];
+
       const totalContributions = users.reduce((s,u)=> s + (u.contribution || 0), 0);
       const totalProfit = users.reduce((s,u)=> s + (u.totalProfit || 0), 0);
-      const poolTotal = totalContributions + totalProfit;
+      // ⚠️ Pool total must include recorded variances (cash count discrepancies,
+      // reconciliations, etc.) — omitting these was exactly why this page's price
+      // used to disagree with the live app. Matches getPoolTotal() in the main app.
+      const totalAdjustments = adjustments.reduce((s,a)=> s + (a.amount || 0), 0);
+      const poolTotal = totalContributions + totalProfit + totalAdjustments;
+
+      // ⚠️ Each member's shares must use THEIR OWN locked-in entry price
+      // (entryPrice — the live price they actually paid when they joined),
+      // not the flat $25 founding price for everyone. Only founding members
+      // without a recorded entryPrice fall back to $25. Also rounds to the
+      // nearest whole share, matching getUserShares() in the main app —
+      // fractional shares were never actually issued.
       const totalShares = users.reduce((s,u)=> {
         if (typeof u.shares === 'number') return s + u.shares;
-        return s + ((u.contribution || 0) / ENTRY_PRICE);
+        const price = (typeof u.entryPrice === 'number' && u.entryPrice > 0) ? u.entryPrice : ENTRY_PRICE;
+        return s + Math.round((u.contribution || 0) / price);
       }, 0);
+
       currentSharePrice = totalShares > 0 ? (poolTotal / totalShares) : ENTRY_PRICE;
       renderSharePrice();
     }).catch(()=> showSharePriceFallback());
