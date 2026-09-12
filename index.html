@@ -3,709 +3,2489 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hustler's Cabin — Member Access</title>
+<title>Hustler's Cabin — By Invitation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBvKsoZvGIUpffz1-tjQv-Xx5hA4sx-OIY",
-  authDomain: "hustlersball-eaf4e.firebaseapp.com",
-  projectId: "hustlersball-eaf4e",
-  storageBucket: "hustlersball-eaf4e.firebasestorage.app",
-  messagingSenderId: "421761462382",
-  appId: "1:421761462382:web:c17e627b97307db3b3367f"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-</script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Cormorant+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  :root{
-    --void:#05080c;
-    --panel:#0b1119;
-    --panel-2:#0f1826;
-    --line:#1c2a3a;
-    --cyan:#3fe3e0;
-    --cyan-dim:#1b6f6e;
-    --orange:#ff8a3d;
-    --text:#dce8ef;
-    --text-dim:#8ca2b3;
-    --danger:#ff5d5d;
-    --radius:10px;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--void);color:var(--text);font-family:'Inter',sans-serif;}
-  body{min-height:100vh;}
-  h1,h2,h3,.mono{font-family:'Orbitron',sans-serif;letter-spacing:.04em;}
-  ::selection{background:var(--cyan);color:#05080c;}
-  a{color:var(--cyan);}
-  .bg-grid{
-    position:fixed;inset:0;z-index:0;pointer-events:none;
-    background-image:
-      linear-gradient(rgba(63,227,224,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(63,227,224,0.04) 1px, transparent 1px);
-    background-size:42px 42px;
-    mask-image:radial-gradient(circle at 50% 30%, black, transparent 80%);
-  }
-  .glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:900px;height:900px;
-    background:radial-gradient(circle, rgba(63,227,224,0.10), transparent 60%);z-index:0;pointer-events:none;}
+/* ═══════════════════════════════════════════════════════════
+   HUSTLER'S CABIN — Design Tokens
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg-primary: #0A0908;
+  --bg-secondary: #12100E;
+  --bg-card: #1A1815;
+  --bg-card-hover: #221F1B;
+  --gold: #D4AF37;
+  --gold-hi: #F9E596;
+  --gold-mid: #C9A227;
+  --gold-lo: #8A6325;
+  --gold-deep: #5C4216;
+  --cream: #E0DCD5;
+  --cream-dim: #A8A29A;
+  --cream-muted: #6B6660;
+  --border: rgba(212, 175, 55, 0.18);
+  --border-strong: rgba(212, 175, 55, 0.35);
+  --border-hairline: rgba(212, 175, 55, 0.12);
+  --shadow-deep: 0 30px 60px -20px rgba(0,0,0,0.9), 0 15px 30px -15px rgba(0,0,0,0.7);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  --gold-gradient: linear-gradient(135deg, #F9E596 0%, #D4AF37 35%, #C9A227 55%, #8A6325 100%);
+  --gold-gradient-soft: linear-gradient(135deg, #D4AF37 0%, #C9A227 50%, #8A6325 100%);
+  --serif-display: 'Playfair Display', 'Didot', 'Bodoni Moda', Georgia, serif;
+  --serif-body: 'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+  --small-caps: 'Cormorant SC', 'Cormorant Garamond', serif;
+}
 
-  /* ---------- GATE ---------- */
-  #gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--void);}
-  .gate-box{position:relative;z-index:1;width:min(90vw,380px);text-align:center;}
-  .gate-mark{font-family:'Orbitron';font-weight:900;font-size:13px;letter-spacing:.35em;color:var(--cyan);opacity:.8;margin-bottom:6px;}
-  .gate-title{font-size:22px;font-weight:700;margin:0 0 6px;}
-  .gate-sub{color:var(--text-dim);font-size:13px;margin-bottom:28px;}
-  .code-row{display:flex;gap:8px;justify-content:center;margin-bottom:18px;}
-  .code-digit{width:44px;height:56px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
-    text-align:center;font-family:'Orbitron';font-size:24px;color:var(--cyan);outline:none;transition:border-color .15s, box-shadow .15s;}
-  .code-digit:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(63,227,224,0.15);}
-  .gate-error{color:var(--danger);font-size:12.5px;height:16px;margin-bottom:14px;}
-  .btn{
-    appearance:none;border:none;cursor:pointer;font-family:'Inter';font-weight:600;font-size:14px;
-    padding:13px 22px;border-radius:8px;transition:transform .1s, opacity .15s, box-shadow .15s;
-  }
-  .btn:active{transform:scale(.97);}
-  .btn-primary{background:linear-gradient(135deg,var(--cyan),#2bb8b6);color:#02191a;width:100%;box-shadow:0 0 24px rgba(63,227,224,0.18);}
-  .btn-primary:hover{box-shadow:0 0 32px rgba(63,227,224,0.32);}
-  .btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
-  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text-dim);}
-  .btn-ghost:hover{border-color:var(--cyan-dim);color:var(--text);}
-  .btn-danger{background:transparent;border:1px solid rgba(255,93,93,.4);color:var(--danger);}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  /* ---------- APP SHELL ---------- */
-  #app{display:none;position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 20px 80px;}
-  header.top{position:sticky;top:0;z-index:10;background:rgba(5,8,12,0.88);backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--line);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
-    margin:0 -20px 0;}
-  .brand{font-family:'Orbitron';font-weight:700;font-size:14px;letter-spacing:.08em;display:flex;align-items:center;gap:8px;}
-  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
-  .step-track{display:flex;gap:5px;}
-  .step-dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .2s, transform .2s;}
-  .step-dot.active{background:var(--cyan);transform:scale(1.25);}
-  .step-dot.done{background:var(--cyan-dim);}
+html { scroll-behavior: smooth; }
 
-  .screen{display:none;padding:44px 0 10px;animation:rise .35s ease;}
-  .screen.active{display:block;}
-  @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+body {
+  background: var(--bg-primary);
+  color: var(--cream);
+  font-family: var(--serif-body);
+  font-size: 19px;
+  line-height: 1.7;
+  font-weight: 400;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  .eyebrow{color:var(--orange);font-family:'Orbitron';font-size:11px;letter-spacing:.25em;margin-bottom:10px;}
-  h2.screen-title{font-size:26px;margin:0 0 14px;line-height:1.25;}
-  .lede{color:var(--text-dim);font-size:15px;line-height:1.65;margin-bottom:30px;max-width:56ch;}
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
-  .card h3{font-size:13px;color:var(--cyan);margin:0 0 8px;letter-spacing:.05em;}
-  .card p{font-size:14px;color:var(--text-dim);line-height:1.6;margin:0;}
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+}
 
-  .role-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px;}
-  .role-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;
-    display:flex;align-items:flex-start;gap:14px;}
-  .role-badge{font-family:'Orbitron';font-size:12px;font-weight:700;color:#02191a;background:var(--cyan);
-    border-radius:6px;padding:5px 8px;white-space:nowrap;flex-shrink:0;}
-  .role-badge.member{background:var(--orange);}
-  .role-name{font-weight:600;font-size:14.5px;margin:0 0 3px;}
-  .role-desc{font-size:13px;color:var(--text-dim);margin:0;line-height:1.55;}
+/* ═══════════════════════════════════════════════════════════
+   GATE — Passphrase overlay (envelope-sealed)
+   ═══════════════════════════════════════════════════════════ */
+.gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  transition: opacity 1s ease, visibility 1s;
+  overflow: hidden;
+}
+.gate-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(212,175,55,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 80%, rgba(138,99,37,0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+.gate-overlay.unlocked {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.gate-card {
+  position: relative;
+  max-width: 460px;
+  width: 100%;
+  padding: 64px 48px 48px;
+  background: linear-gradient(135deg, #1A1815 0%, #15120F 100%);
+  border: 1px solid var(--border-strong);
+  outline: 1px solid var(--border);
+  outline-offset: 6px;
+  box-shadow: var(--shadow-deep);
+  text-align: center;
+  z-index: 2;
+}
+.gate-card .corner {
+  position: absolute;
+  width: 16px; height: 16px;
+  border: 1px solid var(--gold);
+}
+.gate-card .corner.tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.gate-card .corner.tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+.gate-card .corner.bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+.gate-card .corner.br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+.gate-card.shake {
+  animation: gateShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes gateShake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-8px); }
+  40%, 60% { transform: translateX(8px); }
+}
+.gate-seal {
+  position: absolute;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #D4AF37 0%, #8A6325 45%, #5C4216 80%, #3D2C0E 100%);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.7),
+    inset -8px -8px 16px rgba(0,0,0,0.5),
+    inset 4px 4px 12px rgba(249,229,150,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-weight: 900;
+  font-size: 2rem;
+  color: rgba(249,229,150,0.85);
+  letter-spacing: -0.05em;
+  transition: transform 0.8s ease 0.3s, opacity 0.8s ease 0.3s;
+}
+.gate-overlay.unlocked .gate-seal {
+  transform: translateX(-50%) scale(0.5) rotate(-12deg);
+  opacity: 0;
+}
+.gate-card .label-caps {
+  display: block;
+  margin-bottom: 12px;
+}
+.gate-card h2 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  margin-bottom: 12px;
+}
+.gate-card .gate-intro {
+  font-style: italic;
+  color: var(--cream-dim);
+  font-size: 1.05rem;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+.gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.gate-form input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-strong);
+  padding: 12px 4px;
+  color: var(--cream);
+  font-family: var(--serif-body);
+  font-size: 1.1rem;
+  text-align: center;
+  letter-spacing: 0.15em;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.gate-form input:focus { border-color: var(--gold); }
+.gate-form input::placeholder {
+  color: var(--cream-muted);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+.gate-form button {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 14px 32px;
+  font-family: var(--small-caps);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+.gate-form button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold-gradient);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.45, 0, 0.15, 1);
+  z-index: -1;
+}
+.gate-form button:hover {
+  color: var(--bg-primary);
+  border-color: var(--gold-hi);
+}
+.gate-form button:hover::before {
+  transform: scaleX(1);
+}
+.gate-error {
+  margin-top: 4px;
+  font-size: 0.92rem;
+  color: rgba(200, 90, 80, 0.95);
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 0.4s;
+  height: 1.2em;
+}
+.gate-error.show { opacity: 1; }
+.gate-expired-notice {
+  display: none;
+  margin: 0 0 24px;
+  padding: 14px 18px;
+  background: rgba(180, 120, 50, 0.08);
+  border: 1px solid rgba(200, 120, 60, 0.35);
+  border-left: 2px solid rgba(200, 120, 60, 0.85);
+  text-align: left;
+  font-style: italic;
+  color: rgba(220, 180, 140, 0.95);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  position: relative;
+}
+.gate-expired-notice.show { display: block; }
+.gate-expired-notice::before {
+  content: '✦';
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  color: rgba(200, 120, 60, 0.7);
+  font-size: 0.85rem;
+  font-style: normal;
+}
+.gate-expired-notice .notice-label {
+  display: block;
+  font-family: var(--small-caps);
+  font-style: normal;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: rgba(200, 120, 60, 0.95);
+  margin-bottom: 6px;
+}
+.gate-footnote {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 0.78rem;
+  color: var(--cream-muted);
+  font-style: italic;
+  line-height: 1.6;
+}
 
-  .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px;}
-  .stat{flex:1;min-width:130px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;}
-  .stat .num{font-family:'Orbitron';font-size:20px;color:var(--cyan);}
-  .stat .lbl{font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+/* Access timer in nav */
+.access-timer {
+  font-family: var(--small-caps);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  opacity: 0.75;
+  padding-left: 24px;
+  margin-left: 16px;
+  border-left: 1px solid var(--border);
+  white-space: nowrap;
+  transition: opacity 0.3s;
+}
+.access-timer:hover { opacity: 1; }
+.access-timer.urgent { color: rgba(200, 120, 60, 0.95); }
+@media (max-width: 900px) {
+  .access-timer { display: none; }
+}
 
-  .legal-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-    padding:22px;max-height:340px;overflow-y:auto;font-size:13.5px;line-height:1.7;color:var(--text-dim);margin-bottom:16px;}
-  .legal-block h4{color:var(--text);font-family:'Orbitron';font-size:12px;letter-spacing:.05em;margin:18px 0 8px;}
-  .legal-block h4:first-child{margin-top:0;}
-  .legal-block::-webkit-scrollbar{width:6px;}
-  .legal-block::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+/* ═══════════════════════════════════════════════════════════
+   TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════ */
+h1, h2, h3, h4 {
+  font-family: var(--serif-display);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+}
 
-  .field{margin-bottom:16px;}
-  .field label{display:block;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;letter-spacing:.02em;}
-  .field input[type=text], .field input[type=email], .field select{
-    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--text);
-    padding:12px 14px;font-size:14.5px;font-family:'Inter';outline:none;transition:border-color .15s;
-  }
-  .field input:focus, .field select:focus{border-color:var(--cyan);}
-  .sig-input{font-family:'Georgia',serif;font-style:italic;font-size:22px !important;padding:16px 14px !important;}
+h1 { font-size: clamp(2.8rem, 7vw, 6rem); }
+h2 { font-size: clamp(2rem, 4.5vw, 3.5rem); font-weight: 600; }
+h3 { font-size: clamp(1.3rem, 2.5vw, 1.8rem); font-weight: 500; }
 
-  .check-row{display:flex;align-items:flex-start;gap:10px;background:var(--panel-2);border:1px solid var(--line);
-    border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;}
-  .check-row input{margin-top:3px;accent-color:var(--cyan);width:16px;height:16px;flex-shrink:0;}
-  .check-row span{font-size:13.5px;color:var(--text-dim);line-height:1.55;}
+.gold-text {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(249,229,150,0.2));
+}
 
-  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:32px;gap:10px;}
-  .nav-row .btn-primary{width:auto;min-width:150px;}
+.small-caps {
+  font-family: var(--small-caps);
+  text-transform: lowercase;
+  font-variant: small-caps;
+  letter-spacing: 0.15em;
+}
 
-  .amount-box{display:flex;align-items:baseline;gap:6px;background:var(--panel-2);border:1px solid var(--cyan-dim);
-    border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;}
-  .amount-box .sign{font-family:'Orbitron';font-size:22px;color:var(--orange);}
-  .amount-box .val{font-family:'Orbitron';font-size:38px;color:var(--cyan);}
-  .amount-box .desc{font-size:12.5px;color:var(--text-dim);margin-left:auto;text-align:right;max-width:180px;}
+.label-caps {
+  font-family: var(--small-caps);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--gold);
+  font-weight: 500;
+}
 
-  .confirm-wrap{text-align:center;padding:50px 0;}
-  .confirm-ring{width:70px;height:70px;border-radius:50%;border:2px solid var(--cyan);display:flex;align-items:center;
-    justify-content:center;margin:0 auto 22px;box-shadow:0 0 30px rgba(63,227,224,0.25);}
-  .confirm-ring svg{width:30px;height:30px;}
-  .signed-name{font-family:'Georgia',serif;font-style:italic;color:var(--cyan);font-size:22px;}
+p { font-size: 1.1rem; line-height: 1.75; color: var(--cream-dim); }
+p.lead { font-size: 1.3rem; color: var(--cream); line-height: 1.6; }
 
-  .err-text{color:var(--danger);font-size:12.5px;margin-top:6px;display:none;}
-  .footer-note{color:var(--text-dim);opacity:.5;font-size:11px;text-align:center;margin-top:50px;letter-spacing:.03em;}
+/* ═══════════════════════════════════════════════════════════
+   FILIGREE DIVIDERS
+   ═══════════════════════════════════════════════════════════ */
+.filigree {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 28px auto;
+  max-width: 360px;
+  opacity: 0.85;
+}
+.filigree .line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+}
+.filigree .diamond {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  position: relative;
+  flex-shrink: 0;
+}
+.filigree .diamond::before,
+.filigree .diamond::after {
+  content: '';
+  position: absolute;
+  background: var(--gold-hi);
+}
+.filigree .diamond::before {
+  width: 4px; height: 1px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.filigree.large {
+  max-width: 540px;
+  margin: 40px auto;
+}
+.filigree.large .line { height: 1px; }
+.filigree.large .diamond { width: 12px; height: 12px; }
 
-  @media(max-width:520px){
-    .amount-box{flex-wrap:wrap;} .amount-box .desc{text-align:left;margin-left:0;}
-    .nav-row{flex-direction:column-reverse;align-items:stretch;}
-    .nav-row .btn{width:100%;}
-  }
+/* Small flourish with curl */
+.flourish {
+  text-align: center;
+  margin: 24px 0;
+  color: var(--gold);
+  font-size: 1.4rem;
+  letter-spacing: 0.5em;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+section {
+  position: relative;
+  padding: 120px 24px;
+  max-width: 100%;
+}
+.container {
+  max-width: 1140px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+.container-narrow {
+  max-width: 760px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 72px;
+}
+.section-header .label-caps {
+  display: block;
+  margin-bottom: 14px;
+}
+.section-header h2 {
+  margin-bottom: 14px;
+}
+.section-header p {
+  max-width: 580px;
+  margin: 0 auto;
+  font-style: italic;
+  color: var(--cream-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION — Discreet, top-right
+   ═══════════════════════════════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 22px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(10,9,8,0.92), rgba(10,9,8,0));
+  transition: background 0.4s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+nav.scrolled {
+  background: rgba(10,9,8,0.96);
+  border-bottom: 1px solid var(--border);
+}
+nav .brand {
+  font-family: var(--serif-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+nav .brand .mono {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 1px solid var(--gold);
+  transform: rotate(45deg);
+  margin-right: 12px;
+  vertical-align: middle;
+  position: relative;
+}
+nav .brand .mono::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: var(--gold);
+  opacity: 0.4;
+}
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 32px;
+}
+nav ul a {
+  color: var(--cream-dim);
+  text-decoration: none;
+  font-family: var(--small-caps);
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
+  font-variant: small-caps;
+  font-size: 0.85rem;
+  transition: color 0.3s;
+  position: relative;
+}
+nav ul a:hover { color: var(--gold); }
+nav ul a::after {
+  content: '';
+  position: absolute;
+  bottom: -6px; left: 50%;
+  width: 0; height: 1px;
+  background: var(--gold);
+  transition: all 0.3s;
+  transform: translateX(-50%);
+}
+nav ul a:hover::after { width: 100%; }
+
+/* ═══════════════════════════════════════════════════════════
+   HERO — Envelope opening
+   ═══════════════════════════════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background atmosphere */
+#hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(212,175,55,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 80%, rgba(138,99,37,0.08) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.envelope-stage {
+  position: relative;
+  width: min(540px, 90vw);
+  height: 380px;
+  margin: 0 auto 50px;
+  perspective: 1500px;
+}
+
+/* Envelope body */
+.envelope {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #1A1815 0%, #0F0D0B 100%);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-deep), inset 0 1px 0 rgba(249,229,150,0.05);
+  overflow: hidden;
+}
+
+/* Envelope flap — the part that lifts */
+.envelope-flap {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 60%;
+  background:
+    linear-gradient(180deg, #2A2520 0%, #1A1815 50%, #0F0D0B 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  transition: transform 2.4s cubic-bezier(0.45, 0, 0.15, 1);
+  z-index: 5;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+.envelope-flap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+}
+
+/* Wax seal on the flap */
+.wax-seal {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #D4AF37 0%, #8A6325 45%, #5C4216 80%, #3D2C0E 100%);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.7),
+    inset -8px -8px 16px rgba(0,0,0,0.5),
+    inset 4px 4px 12px rgba(249,229,150,0.2);
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-weight: 900;
+  font-size: 2.2rem;
+  color: rgba(249,229,150,0.85);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  letter-spacing: -0.05em;
+}
+.wax-seal::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.3);
+  background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.15), transparent 60%);
+}
+
+/* Scallop edge effect */
+.wax-seal::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 0% 50%, transparent 8px, #5C4216 9px, transparent 10px),
+    radial-gradient(circle at 100% 50%, transparent 8px, #5C4216 9px, transparent 10px),
+    radial-gradient(circle at 50% 0%, transparent 8px, #5C4216 9px, transparent 10px),
+    radial-gradient(circle at 50% 100%, transparent 8px, #5C4216 9px, transparent 10px);
+  opacity: 0.5;
+}
+
+/* When envelope opens */
+.envelope-stage.open .envelope-flap {
+  transform: rotateX(180deg);
+}
+.envelope-stage.open .wax-seal {
+  animation: sealCrack 1.2s ease-out 0.6s forwards;
+}
+@keyframes sealCrack {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  20% { transform: translate(-50%, -50%) scale(1.08) rotate(-3deg); }
+  40% { transform: translate(-50%, -50%) scale(1.15) rotate(4deg); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(0.6) rotate(-8deg); opacity: 0; }
+}
+
+/* Envelope letter (revealed) */
+.envelope-letter {
+  position: absolute;
+  inset: 30px 24px;
+  background:
+    linear-gradient(135deg, #1A1815 0%, #15120F 100%);
+  border: 1px solid var(--border);
+  padding: 32px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1.4s;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+.envelope-stage.open .envelope-letter {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.envelope-letter .label-caps {
+  margin-bottom: 8px;
+}
+.envelope-letter .cabin-title {
+  font-family: var(--serif-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.envelope-letter .invitation-note {
+  font-family: var(--serif-body);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--cream-dim);
+  margin-top: 12px;
+}
+
+/* Hero scroll cue */
+.scroll-cue {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--gold);
+  font-family: var(--small-caps);
+  letter-spacing: 0.4em;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeUp 1s ease 3.5s forwards;
+}
+.scroll-cue::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 40px;
+  margin: 12px auto 0;
+  background: linear-gradient(180deg, var(--gold), transparent);
+  animation: scrollLine 2s ease-in-out infinite;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes scrollLine {
+  0%, 100% { transform: scaleY(1); opacity: 0.5; }
+  50% { transform: scaleY(1.5); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARD — Used throughout
+   ═══════════════════════════════════════════════════════════ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 56px 48px;
+  position: relative;
+  box-shadow: var(--shadow-card);
+}
+.card.framed {
+  border: 1px solid var(--border);
+  outline: 1px solid var(--border);
+  outline-offset: 6px;
+}
+.card .corner {
+  position: absolute;
+  width: 16px; height: 16px;
+  border: 1px solid var(--gold);
+}
+.card .corner.tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.card .corner.tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+.card .corner.bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+.card .corner.br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+/* ═══════════════════════════════════════════════════════════
+   LETTER SECTION
+   ═══════════════════════════════════════════════════════════ */
+#letter { padding-top: 80px; }
+.letter-text p {
+  font-size: 1.2rem;
+  line-height: 1.85;
+  margin-bottom: 1.4em;
+  color: var(--cream);
+}
+.letter-text p:first-of-type::first-letter {
+  font-family: var(--serif-display);
+  font-size: 4.5rem;
+  font-weight: 700;
+  float: left;
+  line-height: 0.85;
+  margin: 8px 14px 0 0;
+  color: var(--gold);
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.letter-signature {
+  margin-top: 40px;
+  font-style: italic;
+  font-family: var(--serif-display);
+  color: var(--gold);
+  font-size: 1.3rem;
+  text-align: right;
+}
+.letter-signature .small {
+  display: block;
+  font-family: var(--small-caps);
+  font-style: normal;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--cream-dim);
+  margin-top: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRINCIPLES GRID
+   ═══════════════════════════════════════════════════════════ */
+.principle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.principle {
+  background: var(--bg-card);
+  padding: 48px 32px;
+  text-align: center;
+  transition: background 0.4s;
+  position: relative;
+}
+.principle:hover { background: var(--bg-card-hover); }
+.principle .numeral {
+  font-family: var(--serif-display);
+  font-size: 2.6rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--gold);
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+.principle h3 {
+  margin-bottom: 14px;
+  color: var(--cream);
+}
+.principle p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--cream-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MECHANISM — Step flow
+   ═══════════════════════════════════════════════════════════ */
+.step-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 40px;
+  margin-top: 40px;
+}
+.step {
+  position: relative;
+  padding-top: 50px;
+  text-align: center;
+}
+.step .step-num {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 56px; height: 56px;
+  border: 1px solid var(--gold);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--gold);
+  font-weight: 500;
+}
+.step .step-num::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--border-hairline);
+}
+.step h3 {
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+}
+.step p {
+  font-size: 1rem;
+  color: var(--cream-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHARTS
+   ═══════════════════════════════════════════════════════════ */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 32px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 36px 32px 32px;
+  position: relative;
+  transition: border-color 0.4s, transform 0.4s;
+}
+.chart-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.chart-card .chart-label {
+  display: block;
+  margin-bottom: 6px;
+}
+.chart-card h3 {
+  margin-bottom: 8px;
+  font-size: 1.45rem;
+}
+.chart-card .chart-sub {
+  font-size: 0.95rem;
+  color: var(--cream-dim);
+  margin-bottom: 24px;
+  font-style: italic;
+  line-height: 1.5;
+}
+.chart-card .chart-wrap {
+  position: relative;
+  height: 280px;
+  margin: 0 -8px;
+}
+.chart-card .chart-footnote {
+  margin-top: 18px;
+  font-size: 0.8rem;
+  color: var(--cream-muted);
+  font-style: italic;
+  line-height: 1.5;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.chart-disclaimer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--cream-muted);
+  font-style: italic;
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MORAL FRAMEWORK
+   ═══════════════════════════════════════════════════════════ */
+.framework-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+}
+.tenet {
+  border-left: 1px solid var(--gold);
+  padding: 8px 0 8px 28px;
+}
+.tenet h3 {
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+.tenet p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SEAT COUNTER
+   ═══════════════════════════════════════════════════════════ */
+.seat-counter {
+  text-align: center;
+  margin: 0 auto 60px;
+  max-width: 540px;
+  padding: 40px 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  position: relative;
+}
+.seat-counter::before, .seat-counter::after {
+  content: '';
+  position: absolute;
+  width: 24px; height: 24px;
+  border: 1px solid var(--gold);
+}
+.seat-counter::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.seat-counter::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.seat-counter .label-caps {
+  display: block;
+  margin-bottom: 14px;
+}
+.seat-counter .seats-display {
+  font-family: var(--serif-display);
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 12px;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.seat-counter .seats-total {
+  font-family: var(--small-caps);
+  letter-spacing: 0.25em;
+  font-size: 0.95rem;
+  color: var(--cream-dim);
+  text-transform: lowercase;
+  font-variant: small-caps;
+}
+
+.selection-process {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 40px;
+  margin-top: 20px;
+}
+.stage {
+  position: relative;
+  padding: 32px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.stage .stage-numeral {
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-size: 2rem;
+  color: var(--gold);
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+.stage h3 {
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+}
+.stage p {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--cream-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CABIN — What membership provides
+   ═══════════════════════════════════════════════════════════ */
+.benefit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.benefit {
+  background: var(--bg-card);
+  padding: 44px 32px;
+  position: relative;
+  transition: background 0.4s;
+}
+.benefit:hover { background: var(--bg-card-hover); }
+.benefit .benefit-icon {
+  width: 44px; height: 44px;
+  border: 1px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+  transform: rotate(45deg);
+}
+.benefit .benefit-icon::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  background: var(--gold);
+  opacity: 0.3;
+}
+.benefit h3 {
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+}
+.benefit p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--cream-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FAQ
+   ═══════════════════════════════════════════════════════════ */
+.faq-list {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.faq-item {
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+}
+.faq-item:last-child { border-bottom: 1px solid var(--border); }
+.faq-item summary {
+  cursor: pointer;
+  font-family: var(--serif-display);
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--cream);
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: color 0.3s;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary:hover { color: var(--gold); }
+.faq-item summary::after {
+  content: '+';
+  font-family: var(--serif-display);
+  font-weight: 300;
+  font-size: 1.6rem;
+  color: var(--gold);
+  transition: transform 0.3s;
+  flex-shrink: 0;
+}
+.faq-item[open] summary::after { transform: rotate(45deg); }
+.faq-item .faq-answer {
+  margin-top: 16px;
+  padding-right: 32px;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--cream-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WAITLIST — Sealed envelope CTA
+   ═══════════════════════════════════════════════════════════ */
+#waitlist {
+  text-align: center;
+}
+.waitlist-stage {
+  position: relative;
+  max-width: 620px;
+  margin: 0 auto;
+  perspective: 1200px;
+}
+.waitlist-envelope {
+  position: relative;
+  background: linear-gradient(135deg, #1A1815 0%, #0F0D0B 100%);
+  border: 1px solid var(--border-strong);
+  padding: 56px 48px;
+  box-shadow: var(--shadow-deep);
+}
+.waitlist-envelope::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, #2A2520 0%, #1A1815 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition: transform 1.6s cubic-bezier(0.45, 0, 0.15, 1);
+  z-index: 5;
+  pointer-events: none;
+}
+.waitlist-stage.opened .waitlist-envelope::before {
+  transform: rotateX(180deg);
+}
+.waitlist-envelope .corner {
+  position: absolute;
+  width: 16px; height: 16px;
+  border: 1px solid var(--gold);
+}
+.waitlist-envelope .corner.tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.waitlist-envelope .corner.tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+.waitlist-envelope .corner.bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+.waitlist-envelope .corner.br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.waitlist-seal {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  width: 78px; height: 78px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #D4AF37 0%, #8A6325 45%, #5C4216 80%, #3D2C0E 100%);
+  box-shadow:
+    0 6px 20px rgba(0,0,0,0.7),
+    inset -6px -6px 12px rgba(0,0,0,0.5);
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-weight: 900;
+  font-size: 1.8rem;
+  color: rgba(249,229,150,0.85);
+  transition: all 0.8s ease 0.4s;
+}
+.waitlist-stage.opened .waitlist-seal {
+  transform: translate(-50%, -50%) scale(0.5) rotate(-12deg);
+  opacity: 0;
+}
+
+.waitlist-content {
+  position: relative;
+  z-index: 2;
+}
+.waitlist-content h2 {
+  margin-bottom: 14px;
+}
+.waitlist-content p {
+  margin-bottom: 32px;
+  max-width: 460px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.waitlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: left;
+}
+.waitlist-form .field-label {
+  font-family: var(--small-caps);
+  letter-spacing: 0.25em;
+  font-size: 0.7rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: -6px;
+}
+.waitlist-form input {
+  background: var(--bg-primary);
+  border: none;
+  border-bottom: 1px solid var(--border-strong);
+  padding: 12px 4px;
+  color: var(--cream);
+  font-family: var(--serif-body);
+  font-size: 1.05rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.waitlist-form input:focus {
+  border-color: var(--gold);
+}
+.waitlist-form input::placeholder {
+  color: var(--cream-muted);
+  font-style: italic;
+}
+.waitlist-form button {
+  margin-top: 16px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 14px 32px;
+  font-family: var(--small-caps);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+.waitlist-form button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold-gradient);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.45, 0, 0.15, 1);
+  z-index: -1;
+}
+.waitlist-form button:hover {
+  color: var(--bg-primary);
+  border-color: var(--gold-hi);
+}
+.waitlist-form button:hover::before {
+  transform: scaleX(1);
+}
+
+/* Confirmation state */
+.waitlist-confirmation {
+  display: none;
+  padding: 32px 24px;
+  text-align: center;
+}
+.waitlist-stage.submitted .waitlist-content { display: none; }
+.waitlist-stage.submitted .waitlist-confirmation { display: block; }
+.waitlist-confirmation h3 {
+  font-size: 1.8rem;
+  margin-bottom: 14px;
+  color: var(--gold);
+}
+.waitlist-confirmation p {
+  color: var(--cream);
+  font-style: italic;
+}
+.waitlist-confirmation .confirmation-seal {
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: var(--gold-gradient);
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--bg-primary);
+  box-shadow: 0 4px 16px rgba(212,175,55,0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════ */
+footer {
+  text-align: center;
+  padding: 80px 24px 60px;
+  position: relative;
+  border-top: 1px solid var(--border-hairline);
+  margin-top: 40px;
+}
+footer .final-seal {
+  width: 64px; height: 64px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #D4AF37 0%, #8A6325 50%, #5C4216 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif-display);
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: rgba(249,229,150,0.9);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(0,0,0,0.4);
+}
+footer .footer-brand {
+  font-family: var(--serif-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+footer .footer-tagline {
+  font-style: italic;
+  color: var(--cream-dim);
+  font-size: 1rem;
+  margin-bottom: 18px;
+}
+footer .footer-fine {
+  font-family: var(--small-caps);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  color: var(--cream-muted);
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLL REVEAL
+   ═══════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  body { font-size: 17px; }
+  section { padding: 80px 18px; }
+  .card { padding: 40px 28px; }
+  nav { padding: 16px 20px; }
+  nav ul { display: none; }
+  nav ul.mobile { display: flex; gap: 16px; }
+  nav ul.mobile a { font-size: 0.7rem; letter-spacing: 0.15em; }
+  .envelope-stage { height: 320px; }
+  .wax-seal { width: 76px; height: 76px; font-size: 1.8rem; }
+  .envelope-letter { padding: 24px 18px; inset: 24px 18px; }
+  .principle-grid, .benefit-grid { grid-template-columns: 1fr; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .chart-card { padding: 28px 20px; }
+  .chart-card .chart-wrap { height: 240px; }
+  .waitlist-envelope { padding: 40px 28px; }
+  .waitlist-form input { font-size: 1rem; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 2.2rem; }
+  h2 { font-size: 1.6rem; }
+  .letter-text p:first-of-type::first-letter { font-size: 3.2rem; }
+}
 </style>
 </head>
 <body>
 
-<audio id="bgMusic" src="ambition.mp3" loop preload="auto"></audio>
+<!-- ═══════════════════════════════════════════════════════════
+     GATE — Passphrase protection (24h cache-bound access)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="gate" class="gate-overlay">
+  <div class="gate-card" id="gate-card">
+    <span class="corner tl"></span>
+    <span class="corner tr"></span>
+    <span class="corner bl"></span>
+    <span class="corner br"></span>
+    <div class="gate-seal">HC</div>
 
-<div class="bg-grid"></div>
-<div class="glow"></div>
+    <span class="label-caps">By Invitation</span>
+    <h2 class="gold-text">Hustler's Cabin</h2>
+    <p class="gate-intro">A passphrase is required to proceed. Should you not have one, the link you received was not for you.</p>
 
-<!-- ================= GATE ================= -->
-<div id="gate">
-  <div class="gate-box">
-    <div class="gate-mark">ANDRE METHOD</div>
-    <h1 class="gate-title">Hustler's Cabin</h1>
-    <p class="gate-sub">Private access. Enter your invitation code to continue.</p>
-    <div class="code-row" id="codeRow">
-      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="0">
-      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="1">
-      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="2">
-      <input class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" data-i="3">
-    </div>
-    <div class="gate-error" id="gateError"></div>
-    <button class="btn btn-primary" id="gateBtn" disabled>Unlock</button>
+    <form class="gate-form" id="gate-form" autocomplete="off">
+      <div class="gate-expired-notice" id="gate-expired-notice">
+        <span class="notice-label">Access Lapsed</span>
+        Your previous access has expired. A fresh passphrase is required to proceed.
+      </div>
+      <input type="password" id="gate-input" placeholder="Passphrase" autocomplete="off" autofocus />
+      <button type="submit">Proceed</button>
+    </form>
+    <div class="gate-error" id="gate-error">This passphrase is not recognized.</div>
+
+    <div class="gate-footnote">Access, once granted, persists for twenty-four hours. After that, a fresh passphrase is required.</div>
   </div>
 </div>
 
-<!-- ================= APP ================= -->
-<div id="app">
-  <header class="top">
-    <div class="brand"><span class="dot"></span> HUSTLER'S CABIN</div>
-    <div class="step-track" id="stepTrack"></div>
-  </header>
+<!-- ═══════════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="brand"><span class="mono"></span>Hustler's Cabin</div>
+  <ul>
+    <li><a href="#letter">The Letter</a></li>
+    <li><a href="#principles">Principles</a></li>
+    <li><a href="#mechanism">Mechanism</a></li>
+    <li><a href="#numbers">The Numbers</a></li>
+    <li><a href="#framework">Character</a></li>
+    <li><a href="#waitlist">Apply</a></li>
+  </ul>
+  <div id="access-timer" class="access-timer"></div>
+</nav>
 
-  <!-- SCREEN 0: WELCOME -->
-  <section class="screen" data-screen="0">
-    <div class="eyebrow">START HERE</div>
-    <h2 class="screen-title">A member-funded lending pool, built and owned by its members.</h2>
-    <p class="lede">This walkthrough explains how Hustler's Cabin works, who does what, and what you're agreeing to before you join. It takes about five minutes.</p>
-
-    <div class="stat-row">
-      <div class="stat"><div class="num">25</div><div class="lbl">Members per team</div></div>
-      <div class="stat"><div class="num">3</div><div class="lbl">Admins per team</div></div>
-      <div class="stat"><div class="num" id="welcomeSharePrice">$—</div><div class="lbl">Current share price</div></div>
+<!-- ═══════════════════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="container-narrow" style="text-align:center;">
+    <div class="envelope-stage" id="hero-envelope">
+      <div class="envelope">
+        <div class="envelope-letter">
+          <span class="label-caps">By Invitation</span>
+          <div class="cabin-title gold-text">Hustler's Cabin</div>
+          <div class="invitation-note">A private society of capital stewards</div>
+        </div>
+        <div class="envelope-flap"></div>
+        <div class="wax-seal">HC</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>WHAT THIS IS</h3>
-      <p>A small, private group pools capital to fund short-term loans. Returns come from voluntary tips, not fixed interest. This is a member-owned collective — not a public offering, and not a bank.</p>
-    </div>
-    <div class="card">
-      <h3>WHAT THIS ISN'T</h3>
-      <p>This tool does not disclose scoring logic, funding criteria, or internal operating methods. Those stay with the team's admins. This walkthrough covers structure and terms only.</p>
+    <div class="flourish">✦ ✦ ✦</div>
+    <p class="lead" style="max-width:540px; margin: 0 auto; font-style: italic; color: var(--cream);">
+      A members-only collective of disciplined capital stewards —
+      bound by principle, governed by merit, and compounded by shared discipline.
+    </p>
+
+    <div class="scroll-cue">Proceed</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LETTER
+     ═══════════════════════════════════════════════════════════ -->
+<section id="letter">
+  <div class="container-narrow">
+    <div class="section-header reveal">
+      <span class="label-caps">I · The Letter</span>
+      <h2>An Invitation, Extended</h2>
     </div>
 
-    <div class="nav-row">
-      <span></span>
-      <button class="btn btn-primary" onclick="goTo(1)">Begin Walkthrough →</button>
+    <div class="card framed reveal reveal-delay-1">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+
+      <div class="letter-text">
+        <p>You have been considered, and your name has been placed forward. What follows is not a solicitation — it is an introduction to a small society of individuals who treat capital as a discipline rather than a pursuit.</p>
+
+        <p>The Cabin is not open to the public. There are no advertisements, no public campaigns, no outreach to strangers. Every seat is filled through the quiet recommendation of those already inside. You are reading this because someone you know believed you would understand what we are building — and why we build it this way.</p>
+
+        <p>What we offer is not novel in concept, only in execution: a structure by which disciplined participants compound their capital together, on short cycles, under terms that reward reliability and quietly exclude those who lack it. The mechanism is simple. The conduct required is not.</p>
+
+        <p>If what follows resonates, you may place your name on the waitlist. Should a seat open, you will be considered. If it does not resonate, no further action is required — the invitation simply expires.</p>
+      </div>
+
+      <div class="filigree large"></div>
+
+      <div class="letter-signature">
+        — The Founding Circle
+        <span class="small">Stewards of the Cabin</span>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- SCREEN 1: TEAM STRUCTURE -->
-  <section class="screen" data-screen="1">
-    <div class="eyebrow">STEP 1 OF 6</div>
-    <h2 class="screen-title">How a team is built</h2>
-    <p class="lede">Every Hustler's Cabin team is capped at 25 seats. Right now, only one team is active — once it's full, a new team forms.</p>
+<!-- ═══════════════════════════════════════════════════════════
+     PRINCIPLES
+     ═══════════════════════════════════════════════════════════ -->
+<section id="principles">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label-caps">II · The Principles</span>
+      <h2>Four Tenets That Govern the Cabin</h2>
+      <p>These are not aspirations. They are the conditions of membership.</p>
+    </div>
 
-    <div class="role-grid">
-      <div class="role-card">
-        <div class="role-badge">ADMIN</div>
-        <div>
-          <p class="role-name">Admin (3 seats)</p>
-          <p class="role-desc">Oversees the pool, holds banking authority, and approves fund movement. Every transfer requires two of the three admins to sign off — no single admin can move money alone.</p>
+    <div class="principle-grid reveal reveal-delay-1">
+      <div class="principle">
+        <div class="numeral">I</div>
+        <h3>Compounding Discipline</h3>
+        <p>Capital left in place grows faster than capital withdrawn. Members commit to leaving their stake in the pool — not for a season, but as a habit.</p>
+      </div>
+      <div class="principle">
+        <div class="numeral">II</div>
+        <h3>Short Cycles, Repeated</h3>
+        <p>Capital is deployed in short, discrete cycles rather than long speculative positions. Velocity, not duration, produces the compound curve.</p>
+      </div>
+      <div class="principle">
+        <div class="numeral">III</div>
+        <h3>Collective Pooling</h3>
+        <p>No single member carries a loan alone. Capital is drawn from the collective, returned to the collective, and the gains are shared by share.</p>
+      </div>
+      <div class="principle">
+        <div class="numeral">IV</div>
+        <h3>Merit, Not Size</h3>
+        <p>Standing in the Cabin is earned through reliability, not through the size of one's contribution. A disciplined small member outranks an undisciplined large one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MECHANISM
+     ═══════════════════════════════════════════════════════════ -->
+<section id="mechanism">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label-caps">III · The Mechanism</span>
+      <h2>How the Cabin Operates</h2>
+      <p>The structure is straightforward. The discipline required to sustain it is not.</p>
+    </div>
+
+    <div class="step-flow reveal reveal-delay-1">
+      <div class="step">
+        <div class="step-num">I</div>
+        <h3>Capital Is Pledged</h3>
+        <p>Members contribute capital into a collective pool. Each member receives shares, priced at the rate prevailing at the moment they enter.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">II</div>
+        <h3>Cycles Are Run</h3>
+        <p>The pool deploys capital as short-term loans to vetted borrowers, each carrying a small return — a tip — paid back at cycle close.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">III</div>
+        <h3>Tips Are Distributed</h3>
+        <p>Returns are credited to participating members, weighted by the shares they held when the cycle began. The pool grows.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">IV</div>
+        <h3>Shares Appreciate</h3>
+        <p>As tips accumulate in the pool, each share becomes worth more. Later entrants pay a higher price — early discipline is rewarded.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     NUMBERS / CHARTS
+     ═══════════════════════════════════════════════════════════ -->
+<section id="numbers">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label-caps">IV · The Numbers Speak</span>
+      <h2>Illustrative Outcomes</h2>
+      <p>The figures below are hypothetical. They are not promises. They are the shape of what disciplined participation produces.</p>
+    </div>
+
+    <div class="chart-disclaimer reveal">
+      All numbers shown are illustrative examples for educational purposes. Actual outcomes depend on cycle participation, borrower behavior, and collective discipline. Past patterns do not guarantee future results.
+    </div>
+
+    <div class="chart-grid">
+
+      <!-- Chart 1: Compounding Growth -->
+      <div class="chart-card reveal">
+        <span class="label-caps chart-label">Compound Curve</span>
+        <h3>The Shape of Disciplined Capital</h3>
+        <p class="chart-sub">Left in place, capital compounds. Withdrawn early, it does not.</p>
+        <div class="chart-wrap"><canvas id="chart-compounding"></canvas></div>
+        <div class="chart-footnote">Illustrative: $1,000 initial stake, hypothetical 12% per-cycle return, 12 cycles. Withdrawn capital earns nothing further.</div>
+      </div>
+
+      <!-- Chart 2: Cycle Return vs Benchmarks -->
+      <div class="chart-card reveal reveal-delay-1">
+        <span class="label-caps chart-label">Comparative Yield</span>
+        <h3>Against Other Homes for Capital</h3>
+        <p class="chart-sub">Annualized yield of various instruments. The Cabin's structure favors velocity.</p>
+        <div class="chart-wrap"><canvas id="chart-benchmarks"></canvas></div>
+        <div class="chart-footnote">Illustrative annualized yields. Savings and treasury rates reflect typical prevailing ranges; equity benchmark reflects long-run historical average.</div>
+      </div>
+
+      <!-- Chart 3: Default Impact (Waterfall) -->
+      <div class="chart-card reveal">
+        <span class="label-caps chart-label">The Cost of Defaults</span>
+        <h3>What Erosion Looks Like</h3>
+        <p class="chart-sub">Gross return is not net return. Defaults, fees, and idle capital each take a portion.</p>
+        <div class="chart-wrap"><canvas id="chart-defaults"></canvas></div>
+        <div class="chart-footnote">Illustrative waterfall: hypothetical gross cycle return, then deductions for default losses, protection fees, and idle-capital drag.</div>
+      </div>
+
+      <!-- Chart 4: Share Price Appreciation -->
+      <div class="chart-card reveal reveal-delay-1">
+        <span class="label-caps chart-label">Share Price</span>
+        <h3>The Value of a Seat</h3>
+        <p class="chart-sub">As tips accumulate in the pool, each share becomes worth more.</p>
+        <div class="chart-wrap"><canvas id="chart-shareprice"></canvas></div>
+        <div class="chart-footnote">Illustrative: share price over 12 cycles, hypothetical 10% per-cycle pool growth. Founding members entered at $25.</div>
+      </div>
+
+      <!-- Chart 5: Member Equity Projection -->
+      <div class="chart-card reveal">
+        <span class="label-caps chart-label">Member Equity</span>
+        <h3>What a Stake Becomes</h3>
+        <p class="chart-sub">A member's stake, projected forward at three participation levels.</p>
+        <div class="chart-wrap"><canvas id="chart-equity"></canvas></div>
+        <div class="chart-footnote">Illustrative: $1,000 initial stake over 12 cycles at three participation efficiencies. Higher utilization compounds faster.</div>
+      </div>
+
+      <!-- Chart 6: Diversification Heat Map -->
+      <div class="chart-card reveal reveal-delay-1">
+        <span class="label-caps chart-label">Diversification</span>
+        <h3>Why Spread Matters</h3>
+        <p class="chart-sub">Concentration in a single borrower magnifies both upside and loss.</p>
+        <div class="chart-wrap"><canvas id="chart-heatmap"></canvas></div>
+        <div class="chart-footnote">Illustrative: risk-adjusted return across borrower concentration. A balanced book outperforms an concentrated one.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MORAL FRAMEWORK
+     ═══════════════════════════════════════════════════════════ -->
+<section id="framework">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label-caps">V · The Moral Framework</span>
+      <h2>What the Cabin Requires</h2>
+      <p>Membership is not a transaction. It is a stewardship — of capital, of reputation, of trust.</p>
+    </div>
+
+    <div class="framework-grid reveal reveal-delay-1">
+      <div class="tenet">
+        <h3>Character, Before Capital</h3>
+        <p>An invitation is extended only after the founding circle has personally considered the candidate's conduct, discretion, and reliability. A larger contribution does not substitute for an unproven character.</p>
+      </div>
+      <div class="tenet">
+        <h3>Discretion Is Required</h3>
+        <p>Members do not discuss the Cabin's operations, its participants, or its borrowers outside the circle. What happens in the Cabin stays in the Cabin — not as secrecy for its own sake, but as the condition that makes trust possible.</p>
+      </div>
+      <div class="tenet">
+        <h3>Honor Your Commitments</h3>
+        <p>Capital pledged to the pool remains in the pool. Members who withdraw without cause forfeit standing. The compound curve depends on discipline, and discipline depends on each member's word.</p>
+      </div>
+      <div class="tenet">
+        <h3>Vouch for Those You Bring</h3>
+        <p>A member who recommends a candidate vouches for them — personally. If the candidate proves unsuitable, the recommending member's standing is affected. This is how the Cabin keeps its standards without bureaucracy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SELECTION
+     ═══════════════════════════════════════════════════════════ -->
+<section id="selection">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label-caps">VI · The Selection</span>
+      <h2>How a Seat Is Offered</h2>
+      <p>The Cabin maintains a fixed number of seats. When one opens, the waitlist is reviewed.</p>
+    </div>
+
+    <div class="seat-counter reveal">
+      <span class="label-caps">Seats Available</span>
+      <div class="seats-display" id="seats-remaining">4</div>
+      <div class="seats-total">of 25 remain</div>
+    </div>
+
+    <div class="selection-process reveal reveal-delay-1">
+      <div class="stage">
+        <div class="stage-numeral">I</div>
+        <h3>Application Received</h3>
+        <p>Your name and a brief note are placed on the waitlist. No financial information is required at this stage — only your name, and the member who referred you.</p>
+      </div>
+      <div class="stage">
+        <div class="stage-numeral">II</div>
+        <h3>The Circle Reviews</h3>
+        <p>The founding circle reviews each candidate against the moral framework. This is not a credit check. It is a character consideration, conducted quietly and without ceremony.</p>
+      </div>
+      <div class="stage">
+        <div class="stage-numeral">III</div>
+        <h3>A Seat Opens</h3>
+        <p>When a seat becomes available, the most suitable candidate on the waitlist is approached privately. The terms of entry — share price, minimum stake, conduct expected — are extended in writing.</p>
+      </div>
+      <div class="stage">
+        <div class="stage-numeral">IV</div>
+        <h3>The Pledge</h3>
+        <p>If accepted, the candidate pledges capital and receives shares. A sponsor — the member who referred them — stands as guarantor of their first cycle. From that point, they are inside.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     THE CABIN — Benefits
+     ═══════════════════════════════════════════════════════════ -->
+<section id="cabin">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label-caps">VII · The Cabin</span>
+      <h2>What Membership Provides</h2>
+      <p>What you receive by joining — beyond the return on your capital.</p>
+    </div>
+
+    <div class="benefit-grid reveal reveal-delay-1">
+      <div class="benefit">
+        <div class="benefit-icon"></div>
+        <h3>Compounding Capital</h3>
+        <p>Your stake participates in every cycle the pool runs. Returns are credited by share, and shares appreciate as the pool grows. Left in place, the curve compounds.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon"></div>
+        <h3>Shared Risk</h3>
+        <p>No single member carries a loan alone. Each cycle's deployment is distributed across the pool. Defaults, when they occur, are absorbed collectively — never by one participant.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon"></div>
+        <h3>A Trusted Circle</h3>
+        <p>The members around you have been vetted by the same standard you were. Their conduct reflects on the Cabin, and the Cabin's conduct reflects on them. The result is a network that holds its shape.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon"></div>
+        <h3>Lender Protection</h3>
+        <p>For larger positions, the Cabin offers optional protection — a fee paid at funding that returns a portion of principal if a borrower defaults. Members choose per-loan which positions to protect.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon"></div>
+        <h3>Full Ledger Transparency</h3>
+        <p>Every loan, every cycle, every adjustment is recorded in a permanent ledger. Members see the same numbers administrators see. There are no private books.</p>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon"></div>
+        <h3>A Voice in the Cabin</h3>
+        <p>Standing in the Cabin is earned by conduct, not by share count. A disciplined small member's voice carries the same weight as a large one's, when the circle convenes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FAQ
+     ═══════════════════════════════════════════════════════════ -->
+<section id="faq">
+  <div class="container-narrow">
+    <div class="section-header reveal">
+      <span class="label-caps">VIII · Considered Questions</span>
+      <h2>What You May Wish to Know</h2>
+    </div>
+
+    <div class="faq-list reveal reveal-delay-1">
+      <details class="faq-item">
+        <summary>Is there a minimum contribution to join?</summary>
+        <div class="faq-answer">There is a minimum stake, set at the founding circle's discretion. It is not large — the Cabin values discipline over deposit size. The exact figure is communicated privately when a seat is offered. Members may increase their stake over time at the prevailing share price.</div>
+      </details>
+      <details class="faq-item">
+        <summary>How are returns actually paid to me?</summary>
+        <div class="faq-answer">Returns are credited to your member account as each cycle closes, distributed by your share of the pool at that cycle's start. They remain in the pool and compound unless you formally request a withdrawal. The Cabin encourages members to leave returns in place — the compound curve depends on it.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Can I withdraw my capital if I need to?</summary>
+        <div class="faq-answer">Yes — but with conditions. Withdrawals are processed at cycle boundaries, not mid-cycle. Early withdrawal within the first cycle of membership is not permitted. Members who withdraw without intention to return forfeit their standing, and a future return would require a fresh invitation.</div>
+      </details>
+      <details class="faq-item">
+        <summary>What happens if a borrower defaults on a loan I participated in?</summary>
+        <div class="faq-answer">The loss is shared across all participants of that loan, weighted by share. If you purchased Lender Protection on the loan, a portion of your principal is recovered into a separate credit balance, which is then redeployed on your behalf in future loans. The Cabin's structure is designed so that no single default materially damages any single member.</div>
+      </details>
+      <details class="faq-item">
+        <summary>How is the Cabin governed? Who makes decisions?</summary>
+        <div class="faq-answer">Day-to-day operations are run by an administrator appointed by the founding circle. Material changes — to the moral framework, the seat count, the cycle structure — are decided by the founding circle collectively. In disputes between members, the founding circle's ruling is final.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Is the Cabin regulated or insured?</summary>
+        <div class="faq-answer">The Cabin is a private members' collective, not a regulated financial institution. Capital pledged to the pool is not insured by any government body. Membership is extended only to those who understand and accept this condition. If you require regulatory protection, the Cabin is not for you.</div>
+      </details>
+      <details class="faq-item">
+        <summary>What disqualifies a member from the Cabin?</summary>
+        <div class="faq-answer">Breach of discretion, failure to honor commitments, conduct unbecoming of a steward, or vouching for a candidate who proves unworthy. The founding circle may, at its discretion, remove a member and return their capital at the prevailing share price. Expulsion is rare, but it is final.</div>
+      </details>
+      <details class="faq-item">
+        <summary>How long does it take for a waitlist candidate to be considered?</summary>
+        <div class="faq-answer">It depends on seat availability. The Cabin holds 25 seats. When one opens, the waitlist is reviewed and the most suitable candidate is approached. Some candidates are considered within weeks; others wait months. The Cabin does not rush this process. Patience is itself a quality we observe.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WAITLIST
+     ═══════════════════════════════════════════════════════════ -->
+<section id="waitlist">
+  <div class="container-narrow">
+    <div class="section-header reveal">
+      <span class="label-caps">IX · The Waitlist</span>
+      <h2>Place Your Name Forward</h2>
+      <p>If what you have read resonates, you may submit your name. No financial information is required at this stage.</p>
+    </div>
+
+    <div class="waitlist-stage" id="waitlist-stage">
+      <div class="waitlist-envelope">
+        <span class="corner tl"></span>
+        <span class="corner tr"></span>
+        <span class="corner bl"></span>
+        <span class="corner br"></span>
+        <div class="waitlist-seal">HC</div>
+
+        <div class="waitlist-content">
+          <form class="waitlist-form" id="waitlist-form" onsubmit="return submitWaitlist(event)">
+            <div>
+              <div class="field-label">Your Name</div>
+              <input type="text" id="wl-name" required placeholder="As you would wish to be addressed" />
+            </div>
+            <div>
+              <div class="field-label">Email</div>
+              <input type="email" id="wl-email" required placeholder="A private address we may use" />
+            </div>
+            <div>
+              <div class="field-label">The Member Who Referred You</div>
+              <input type="text" id="wl-referrer" placeholder="Optional, but considered" />
+            </div>
+            <button type="submit">Place Your Name Forward</button>
+          </form>
+        </div>
+
+        <div class="waitlist-confirmation">
+          <div class="confirmation-seal">✓</div>
+          <h3>Your Name Has Been Recorded</h3>
+          <p>Should a seat open, you will be considered. There is nothing further required of you at this time.</p>
         </div>
       </div>
-      <div class="role-card">
-        <div class="role-badge">ADMIN</div>
-        <div>
-          <p class="role-name">Loan Manager</p>
-          <p class="role-desc">One of the three admins also carries this role. They source and evaluate loan opportunities and bring recommendations to the group — but still can't move funds without a second admin's approval.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge member">MEMBER</div>
-        <div>
-          <p class="role-name">Member (22 seats)</p>
-          <p class="role-desc">Owns shares of the pool, votes on major decisions, and has visibility into performance. Members don't manage funds directly but share in how the pool grows — and can buy additional shares at the current price at any time.</p>
-        </div>
-      </div>
     </div>
+  </div>
+</section>
 
-    <div class="card">
-      <h3>WHY DUAL APPROVAL</h3>
-      <p>Separating "who finds the loan" from "who releases the money" keeps any one person from controlling the pool's funds alone. It's the core safeguard behind every transfer.</p>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(0)">← Back</button>
-      <button class="btn btn-primary" onclick="goTo(2)">Next →</button>
-    </div>
-  </section>
-
-  <!-- SCREEN 2: RULES -->
-  <section class="screen" data-screen="2">
-    <div class="eyebrow">STEP 2 OF 6</div>
-    <h2 class="screen-title">The Rules</h2>
-    <p class="lede">We operate on three pillars. Every member — Admin or not — is held to the same standard.</p>
-
-    <div class="role-grid">
-      <div class="role-card">
-        <div class="role-badge">01</div>
-        <div>
-          <p class="role-name">Discipline</p>
-          <p class="role-desc">Stay focused. Do what's required.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge">02</div>
-        <div>
-          <p class="role-name">Oneness</p>
-          <p class="role-desc">We before me. One cabin, one mission.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge">03</div>
-        <div>
-          <p class="role-name">Communication</p>
-          <p class="role-desc">Speak up. Listen. Align. Act.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>DECLARATION OF COMMITMENT (DOC)</h3>
-      <p>
-        1. I will show up on time and prepared.<br>
-        2. I will stay disciplined and follow through.<br>
-        3. I will put the team first and protect the vision.<br>
-        4. I will communicate openly, honestly, and respectfully.<br>
-        5. I will hold myself and others accountable.<br>
-        6. I will maintain confidentiality and protect the Cabin.
-      </p>
-    </div>
-
-    <div class="card">
-      <h3>A DECLARATION TO THE CABIN</h3>
-      <p>I accept these rules and commit to upholding the standards of Hustler's Cabin. I understand that our strength comes from our discipline, our oneness, and our communication. I'm all in. This is the standard. This is the Cabin.</p>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
-      <button class="btn btn-primary" onclick="goTo(3)">Next →</button>
-    </div>
-  </section>
-
-  <!-- SCREEN 3: GOALS -->
-  <section class="screen" data-screen="3">
-    <div class="eyebrow">STEP 3 OF 6</div>
-    <h2 class="screen-title">Where we're headed — Phase 1</h2>
-    <p class="lede">Growth is measured in loans funded, not dollars. Here's the ramp for our first year.</p>
-
-    <div class="role-grid" id="goalsGrid">
-      <div class="role-card">
-        <div class="role-badge">MONTH 1</div>
-        <div>
-          <p class="role-name">6 loans funded</p>
-          <p class="role-desc">Complete.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge">AUGUST</div>
-        <div>
-          <p class="role-name">Goal: 8 loans</p>
-          <p class="role-desc">Current month.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge">NEXT</div>
-        <div>
-          <p class="role-name">Goal: 12 loans</p>
-          <p class="role-desc">Following month.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge">THEN</div>
-        <div>
-          <p class="role-name">Goal: 16 loans</p>
-          <p class="role-desc">Month after that.</p>
-        </div>
-      </div>
-      <div class="role-card">
-        <div class="role-badge">PHASE 1 CAP</div>
-        <div>
-          <p class="role-name">20 loans max</p>
-          <p class="role-desc">The ceiling for Phase 1. Once we hit 20, the Cabin reevaluates before moving beyond it.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>WHY A CAP</h3>
-      <p>Scaling loan volume faster than the pool's capital and vetting process can support raises risk for everyone. Twenty loans is the ceiling for this phase — after that, admins reassess before growing further.</p>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
-      <button class="btn btn-primary" onclick="goTo(4)">Next →</button>
-    </div>
-  </section>
-
-  <!-- SCREEN 4: MONEY -->
-  <section class="screen" data-screen="4">
-    <div class="eyebrow">STEP 4 OF 6</div>
-    <h2 class="screen-title">Your investment</h2>
-    <p class="lede">Joining a team requires a single, one-time contribution at the current share price. There is no recurring fee, though you're welcome to buy additional shares later at whatever the price is then.</p>
-
-    <div class="amount-box">
-      <span class="sign">$</span><span class="val" id="sharePriceVal">—</span>
-      <span class="desc" id="sharePriceDesc">One-time, at today's share price. Loading live price…</span>
-    </div>
-
-    <div class="card">
-      <h3>WHERE IT GOES</h3>
-      <p>Your contribution joins the shared operating pool, which funds member-approved loans. Profits stay in the pool to grow lending capacity until the group votes to begin distributions.</p>
-    </div>
-    <div class="card">
-      <h3>RETURNS ARE NOT GUARANTEED</h3>
-      <p>This is a private investment among members, not a savings product. Borrowers can default. Value depends on the pool's performance, not a fixed rate. Share price moves with the pool — it can rise or fall.</p>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
-      <button class="btn btn-primary" onclick="goTo(5)">Next →</button>
-    </div>
-  </section>
-
-  <!-- SCREEN 5: LEGAL + NON-COMPETE -->
-  <section class="screen" data-screen="5">
-    <div class="eyebrow">STEP 5 OF 6</div>
-    <h2 class="screen-title">Terms & non-compete</h2>
-    <p class="lede">Read the terms below in full. You'll sign digitally on the next screen.</p>
-
-    <div class="legal-block">
-      <h4>1. NATURE OF PARTICIPATION</h4>
-      <p>Hustler's Cabin is a private, member-funded lending pool. Membership is by invitation only and is not offered to the general public. Participation is not a deposit account, is not FDIC insured, and does not guarantee any return of principal or profit.</p>
-
-      <h4>2. GOVERNANCE</h4>
-      <p>Each team consists of up to twenty-five (25) members, including three (3) Admins, one of whom also serves as Loan Manager. No single Admin may authorize the movement of pooled funds; all transfers require approval from at least two (2) Admins.</p>
-
-      <h4>3. CONTRIBUTION</h4>
-      <p>Membership requires a one-time contribution equal to the current share price at the time of signing, as displayed in Step 4. This is the required investment to join; no further contribution is required to maintain membership, though members may purchase additional shares later at the then-current price.</p>
-
-      <h4>4. CONFIDENTIALITY</h4>
-      <p>Members will not have access to, and this system will not disclose, internal loan-scoring methodology, underwriting criteria, or operational processes used by the team's Admins. This information is treated as confidential and proprietary to the team.</p>
-
-      <h4>5. NON-COMPETE & NON-SOLICITATION</h4>
-      <p>By signing below, the undersigned agrees that, during their membership and for a period of twelve (12) months following their exit from the pool, they will not: (a) form, join, or advise a competing member-funded lending pool that solicits current Hustler's Cabin members or admins; (b) solicit current members, admins, or borrowers of Hustler's Cabin to join a competing venture; or (c) use any confidential methodology, scoring logic, documentation, or operational process learned through participation in Hustler's Cabin to build or support a competing venture.</p>
-
-      <h4>6. RISK ACKNOWLEDGMENT</h4>
-      <p>The undersigned acknowledges that pooled funds are used to fund loans to third parties, that borrowers may default, and that the value of their membership interest — and the share price — may rise, fall, or be lost entirely. This is not a guaranteed-return product.</p>
-
-      <h4>7. GOVERNING TERMS</h4>
-      <p>This agreement, together with the team's Operating Agreement (provided separately by the Admins), governs the member's participation in the pool. Nothing in this walkthrough constitutes legal, tax, or investment advice.</p>
-    </div>
-
-    <div class="check-row" onclick="toggleCheck(this)">
-      <input type="checkbox" id="chk1">
-      <span>I have read and understand the terms above, including Section 5, the non-compete and non-solicitation clause.</span>
-    </div>
-    <div class="check-row" onclick="toggleCheck(this)">
-      <input type="checkbox" id="chk2">
-      <span>I understand this is a private investment with no guaranteed return, and my contribution may be lost.</span>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(4)">← Back</button>
-      <button class="btn btn-primary" id="toSignBtn" onclick="tryGoSign()" disabled>Continue to Signature →</button>
-    </div>
-  </section>
-
-  <!-- SCREEN 6: SIGN -->
-  <section class="screen" data-screen="6">
-    <div class="eyebrow">STEP 6 OF 6</div>
-    <h2 class="screen-title">Digital signature</h2>
-    <p class="lede">Enter your legal name and details exactly as you'd like them recorded. Typing your name below and submitting acts as your binding electronic signature on the terms in Step 5.</p>
-
-    <form id="signForm">
-      <div class="field">
-        <label>FULL LEGAL NAME</label>
-        <input type="text" name="full_name" id="fullName" required placeholder="Jordan A. Rivers">
-      </div>
-      <div class="field">
-        <label>EMAIL ADDRESS</label>
-        <input type="email" name="email" id="email" required placeholder="you@email.com">
-      </div>
-      <div class="field">
-        <label>REQUESTING ROLE</label>
-        <select name="requested_role" id="role" required>
-          <option value="" disabled selected>Select a role</option>
-          <option value="Member">Member</option>
-          <option value="Admin">Admin (subject to team approval)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>TYPE YOUR FULL NAME TO SIGN</label>
-        <input type="text" class="sig-input" name="signature" id="signature" required placeholder="Your signature">
-        <div class="err-text" id="sigErr">Signature must match your full legal name above.</div>
-      </div>
-      <input type="hidden" name="agreement_version" id="agreementVersion" value="Hustler's Cabin Member Terms v2 — share-price entry, 25-seat teams, non-compete Section 5">
-      <input type="hidden" name="share_price_at_signing" id="sharePriceField">
-      <input type="hidden" name="date_signed" id="dateSigned">
-      <input type="hidden" name="full_agreement_text" id="fullAgreementText">
-    </form>
-
-    <div class="check-row" onclick="toggleCheck(this)">
-      <input type="checkbox" id="chk3">
-      <span>By typing my name above, I am electronically signing this agreement and confirm it has the same legal effect as a handwritten signature.</span>
-    </div>
-
-    <div class="nav-row">
-      <button class="btn btn-ghost" onclick="goTo(5)">← Back</button>
-      <button class="btn btn-primary" id="submitBtn" onclick="submitForm()" disabled>Sign & Submit</button>
-    </div>
-  </section>
-
-  <!-- SCREEN 7: CONFIRM -->
-  <section class="screen" data-screen="7">
-    <div class="confirm-wrap">
-      <div class="confirm-ring">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="#3fe3e0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <h2 class="screen-title" style="text-align:center;">Agreement submitted</h2>
-      <p class="lede" style="margin:0 auto 8px;text-align:center;">Signed electronically by</p>
-      <p class="signed-name" id="signedNameDisplay"></p>
-      <p class="lede" style="margin:24px auto 0;text-align:center;">An admin will follow up with next steps for your contribution and team placement.</p>
-    </div>
-  </section>
-
-  <div class="footer-note">HUSTLER'S CABIN — ANDRE METHOD — PRIVATE MEMBER SYSTEM</div>
-</div>
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="final-seal">HC</div>
+  <div class="footer-brand">Hustler's Cabin</div>
+  <div class="footer-tagline">By invitation only. Governed by principle.</div>
+  <div class="footer-fine">Should a seat open, you will be considered.</div>
+</footer>
 
 <script>
-  // ---- GATE ----
-  const CODE = "7777";
-  const digits = document.querySelectorAll('.code-digit');
-  const gateBtn = document.getElementById('gateBtn');
-  const gateError = document.getElementById('gateError');
+// ═══════════════════════════════════════════════════════════
+// GATE CONFIGURATION
+// ───────────────────────────────────────────────────────────
+// Change `passphrase` below to rotate access. The 24h expiry is
+// enforced client-side via localStorage timestamp + cookie
+// max-age. After 24h, or if the user clears site data, access
+// is denied until the (possibly rotated) passphrase is entered.
+//
+// Hidden admin override: Ctrl+Shift+X clears access immediately.
+// ═══════════════════════════════════════════════════════════
+const GATE = {
+  passphrase: 'everythingisawesome',      // ← CHANGE THIS to rotate
+  accessDurationHours: 24,                // ← Access window length
+  storageKey: 'hc_access_until',          // ← localStorage key
+  cookieName: 'hc_access',                // ← Cookie name
+  cookieValue: 'granted'                  // ← Cookie value
+};
 
-  digits.forEach((d,idx)=>{
-    d.addEventListener('input',()=>{
-      d.value = d.value.replace(/[^0-9]/g,'').slice(0,1);
-      if(d.value && idx < digits.length-1){ digits[idx+1].focus(); }
-      checkCode();
-    });
-    d.addEventListener('keydown',(e)=>{
-      if(e.key==='Backspace' && !d.value && idx>0){ digits[idx-1].focus(); }
-    });
-  });
-
-  function checkCode(){
-    const val = Array.from(digits).map(d=>d.value).join('');
-    gateBtn.disabled = val.length !== 4;
+function gateIsValid() {
+  // Primary check: localStorage timestamp must be in the future.
+  // This survives browser restarts and is what enforces the 24h window.
+  try {
+    const until = localStorage.getItem(GATE.storageKey);
+    if (!until) return false;
+    const expiry = parseInt(until, 10);
+    if (isNaN(expiry)) return false;
+    return Date.now() < expiry;
+  } catch (e) {
+    return false;
   }
+}
 
-  function unlock(){
-    const val = Array.from(digits).map(d=>d.value).join('');
-    if(val === CODE){
-      document.getElementById('gate').style.display='none';
-      document.getElementById('app').style.display='block';
-      const music = document.getElementById('bgMusic');
-      music.volume = 0.35;
-      music.play().catch(()=>{});
-      buildSteps();
-      loadSharePrice();
-    } else {
-      gateError.textContent = 'Incorrect code. Try again.';
-      digits.forEach(d=>d.value='');
-      digits[0].focus();
-      gateBtn.disabled = true;
+function gateGrant() {
+  const expiry = Date.now() + (GATE.accessDurationHours * 3600 * 1000);
+  try {
+    localStorage.setItem(GATE.storageKey, String(expiry));
+  } catch (e) {}
+  // Cookie as secondary signal — auto-clears after max-age.
+  document.cookie = `${GATE.cookieName}=${GATE.cookieValue}; max-age=${GATE.accessDurationHours * 3600}; path=/; SameSite=Strict`;
+}
+
+function gateRevoke() {
+  // Admin override — clears all access signals and reloads.
+  document.cookie = `${GATE.cookieName}=; max-age=0; path=/`;
+  try { localStorage.removeItem(GATE.storageKey); } catch (e) {}
+  location.reload();
+}
+
+function gateRemainingMs() {
+  try {
+    const until = localStorage.getItem(GATE.storageKey);
+    if (!until) return 0;
+    const remaining = parseInt(until, 10) - Date.now();
+    return remaining > 0 ? remaining : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function updateAccessTimer() {
+  const el = document.getElementById('access-timer');
+  if (!el) return;
+  const remaining = gateRemainingMs();
+  if (remaining <= 0) {
+    el.textContent = '';
+    return;
+  }
+  const hours = Math.floor(remaining / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  el.textContent = `Access · ${hours}h ${String(minutes).padStart(2, '0')}m`;
+  el.classList.toggle('urgent', remaining < 4 * 3600000); // under 4h: amber
+}
+
+function gateSubmit(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('gate-input');
+  const error = document.getElementById('gate-error');
+  const card = document.getElementById('gate-card');
+  const overlay = document.getElementById('gate');
+
+  if (input.value === GATE.passphrase) {
+    gateClearExpiredFlag();
+    gateGrant();
+    error.classList.remove('show');
+    overlay.classList.add('unlocked');
+    document.body.style.overflow = '';
+    // Trigger the hero envelope opening once the gate has faded.
+    setTimeout(() => {
+      const env = document.getElementById('hero-envelope');
+      if (env) env.classList.add('open');
+    }, 900);
+    // Remove the gate from the DOM after the transition completes.
+    setTimeout(() => {
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      updateAccessTimer();
+    }, 1800);
+  } else {
+    error.classList.add('show');
+    card.classList.remove('shake');
+    // Reflow to restart the animation.
+    void card.offsetWidth;
+    card.classList.add('shake');
+    input.value = '';
+    input.focus();
+  }
+  return false;
+}
+
+function gateWasExpired() {
+  // Detects whether the user previously had access that has since lapsed.
+  // This is true ONLY when a timestamp exists in localStorage AND is in the past.
+  // Returns false for: first-time visitors, cleared storage, admin override, active sessions.
+  try {
+    const until = localStorage.getItem(GATE.storageKey);
+    if (!until) return false;
+    const expiry = parseInt(until, 10);
+    if (isNaN(expiry)) return false;
+    return Date.now() >= expiry;
+  } catch (e) {
+    return false;
+  }
+}
+
+function gateClearExpiredFlag() {
+  // Removes the lapsed timestamp so a future expiry will show the notice again
+  // cleanly (otherwise a re-prompt after a fresh grant would falsely show lapsed).
+  try { localStorage.removeItem(GATE.storageKey); } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+// GATE INITIALIZATION — runs immediately
+// ═══════════════════════════════════════════════════════════
+(function gateInit() {
+  const gate = document.getElementById('gate');
+  if (!gate) return;
+
+  if (gateIsValid()) {
+    // Already authenticated — remove the gate immediately.
+    if (gate.parentNode) gate.parentNode.removeChild(gate);
+    document.body.style.overflow = '';
+    updateAccessTimer();
+    setInterval(updateAccessTimer, 30000); // refresh every 30s
+  } else {
+    // Show gate, lock body scroll.
+    gate.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // If the user's prior access has lapsed, surface the expired notice.
+    if (gateWasExpired()) {
+      const notice = document.getElementById('gate-expired-notice');
+      if (notice) notice.classList.add('show');
+    }
+
+    // Bind form submission.
+    const form = document.getElementById('gate-form');
+    if (form) form.addEventListener('submit', gateSubmit);
+    // Focus the input once page is fully loaded.
+    window.addEventListener('load', () => {
+      const input = document.getElementById('gate-input');
+      if (input) input.focus();
+    });
+  }
+})();
+
+// Hidden admin override: Ctrl+Shift+X clears access.
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && (e.key === 'X' || e.key === 'x')) {
+    e.preventDefault();
+    gateRevoke();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// HERO ENVELOPE OPENING — only auto-opens if gate is absent
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const gate = document.getElementById('gate');
+  // If the gate is still on the page (user not yet authenticated),
+  // the hero envelope will be opened by gateSubmit() after success.
+  if (!gate) {
+    setTimeout(() => {
+      const env = document.getElementById('hero-envelope');
+      if (env) env.classList.add('open');
+    }, 800);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// NAV SCROLLED STATE
+// ═══════════════════════════════════════════════════════════
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 60) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+// ═══════════════════════════════════════════════════════════
+// SCROLL REVEAL — IntersectionObserver
+// ═══════════════════════════════════════════════════════════
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ═══════════════════════════════════════════════════════════
+// WAITLIST FORM — envelope opens on submit
+// ═══════════════════════════════════════════════════════════
+function submitWaitlist(e) {
+  e.preventDefault();
+  const stage = document.getElementById('waitlist-stage');
+  stage.classList.add('opened');
+  setTimeout(() => {
+    stage.classList.add('submitted');
+  }, 1400);
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHARTS — Chart.js, dark-luxury styling
+// ═══════════════════════════════════════════════════════════
+const GOLD = '#D4AF37';
+const GOLD_HI = '#F9E596';
+const GOLD_LO = '#8A6325';
+const CREAM = '#E0DCD5';
+const CREAM_DIM = '#A8A29A';
+const BG_CARD = '#1A1815';
+const GRID_COLOR = 'rgba(212, 175, 55, 0.08)';
+
+const baseChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      labels: {
+        color: CREAM_DIM,
+        font: { family: 'Cormorant Garamond', size: 13 },
+        padding: 14,
+        usePointStyle: true,
+        pointStyle: 'rectRot',
+      }
+    },
+    tooltip: {
+      backgroundColor: '#0A0908',
+      titleColor: GOLD_HI,
+      bodyColor: CREAM,
+      borderColor: GOLD,
+      borderWidth: 1,
+      titleFont: { family: 'Playfair Display', size: 14, weight: '600' },
+      bodyFont: { family: 'Cormorant Garamond', size: 13 },
+      padding: 12,
+      cornerRadius: 0,
+      displayColors: false,
     }
   }
-  gateBtn.addEventListener('click', unlock);
-  digits[digits.length-1].addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !gateBtn.disabled){ unlock(); } });
+};
 
-  // ---- LIVE SHARE PRICE (mirrors main app's NAV formula exactly) ----
-  const ENTRY_PRICE = 25; // fixed historical entry price, used as fallback basis
-  let currentSharePrice = null;
-
-  function loadSharePrice(){
-    db.collection('state').doc('main').get().then(doc => {
-      if(!doc.exists){ showSharePriceFallback(); return; }
-      const data = doc.data();
-      const users = data.users || [];
-      const adjustments = data.adjustments || [];
-
-      const totalContributions = users.reduce((s,u)=> s + (u.contribution || 0), 0);
-      const totalProfit = users.reduce((s,u)=> s + (u.totalProfit || 0), 0);
-      // ⚠️ Pool total must include recorded variances (cash count discrepancies,
-      // reconciliations, etc.) — omitting these was exactly why this page's price
-      // used to disagree with the live app. Matches getPoolTotal() in the main app.
-      const totalAdjustments = adjustments.reduce((s,a)=> s + (a.amount || 0), 0);
-      const poolTotal = totalContributions + totalProfit + totalAdjustments;
-
-      // ⚠️ Each member's shares must use THEIR OWN locked-in entry price
-      // (entryPrice — the live price they actually paid when they joined),
-      // not the flat $25 founding price for everyone. Only founding members
-      // without a recorded entryPrice fall back to $25. Also rounds to the
-      // nearest whole share, matching getUserShares() in the main app —
-      // fractional shares were never actually issued.
-      const totalShares = users.reduce((s,u)=> {
-        if (typeof u.shares === 'number') return s + u.shares;
-        const price = (typeof u.entryPrice === 'number' && u.entryPrice > 0) ? u.entryPrice : ENTRY_PRICE;
-        return s + Math.round((u.contribution || 0) / price);
-      }, 0);
-
-      currentSharePrice = totalShares > 0 ? (poolTotal / totalShares) : ENTRY_PRICE;
-      renderSharePrice();
-    }).catch(()=> showSharePriceFallback());
+const baseScales = {
+  x: {
+    ticks: { color: CREAM_DIM, font: { family: 'Cormorant SC', size: 11 } },
+    grid: { color: GRID_COLOR, drawBorder: false },
+    border: { color: 'rgba(212, 175, 55, 0.2)' }
+  },
+  y: {
+    ticks: { color: CREAM_DIM, font: { family: 'Cormorant SC', size: 11 } },
+    grid: { color: GRID_COLOR, drawBorder: false },
+    border: { color: 'rgba(212, 175, 55, 0.2)' }
   }
+};
 
-  function renderSharePrice(){
-    const price = currentSharePrice != null ? currentSharePrice : ENTRY_PRICE;
-    const priceStr = price.toFixed(2);
-    const welcomeEl = document.getElementById('welcomeSharePrice');
-    if(welcomeEl) welcomeEl.textContent = '$' + priceStr;
-    const valEl = document.getElementById('sharePriceVal');
-    if(valEl) valEl.textContent = priceStr;
-    const descEl = document.getElementById('sharePriceDesc');
-    if(descEl) descEl.textContent = 'One-time, at today\'s live share price. This number updates as the pool grows.';
-    const field = document.getElementById('sharePriceField');
-    if(field) field.value = '$' + priceStr;
-  }
+// Chart 1: Compounding Growth — two lines (compounded vs withdrawn)
+const compoundingCtx = document.getElementById('chart-compounding').getContext('2d');
+const compGradient = compoundingCtx.createLinearGradient(0, 0, 0, 280);
+compGradient.addColorStop(0, 'rgba(212, 175, 55, 0.35)');
+compGradient.addColorStop(1, 'rgba(212, 175, 55, 0.02)');
 
-  function showSharePriceFallback(){
-    currentSharePrice = ENTRY_PRICE;
-    const welcomeEl = document.getElementById('welcomeSharePrice');
-    if(welcomeEl) welcomeEl.textContent = '$' + ENTRY_PRICE.toFixed(2);
-    const valEl = document.getElementById('sharePriceVal');
-    if(valEl) valEl.textContent = ENTRY_PRICE.toFixed(2);
-    const descEl = document.getElementById('sharePriceDesc');
-    if(descEl) descEl.textContent = 'Could not reach the live pool — showing the base entry price. An admin will confirm the exact amount.';
-    const field = document.getElementById('sharePriceField');
-    if(field) field.value = '$' + ENTRY_PRICE.toFixed(2) + ' (fallback, live price unavailable)';
-  }
-
-  // ---- STEP TRACK ----
-  const TOTAL_STEPS = 8; // 0-7
-  let current = 0;
-  function buildSteps(){
-    const track = document.getElementById('stepTrack');
-    track.innerHTML = '';
-    for(let i=0;i<TOTAL_STEPS;i++){
-      const dot = document.createElement('div');
-      dot.className = 'step-dot';
-      track.appendChild(dot);
+new Chart(compoundingCtx, {
+  type: 'line',
+  data: {
+    labels: ['Start', 'C2', 'C4', 'C6', 'C8', 'C10', 'C12'],
+    datasets: [
+      {
+        label: 'Left in place (compounding)',
+        data: [1000, 1254, 1573, 1973, 2475, 3105, 3895],
+        borderColor: GOLD,
+        backgroundColor: compGradient,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: GOLD_HI,
+        pointBorderColor: GOLD,
+        borderWidth: 2.5
+      },
+      {
+        label: 'Withdrawn at C4',
+        data: [1000, 1254, 1573, 1573, 1573, 1573, 1573],
+        borderColor: GOLD_LO,
+        backgroundColor: 'transparent',
+        borderDash: [4, 4],
+        tension: 0,
+        pointRadius: 2,
+        pointBackgroundColor: GOLD_LO,
+        borderWidth: 1.5
+      }
+    ]
+  },
+  options: {
+    ...baseChartOptions,
+    scales: {
+      ...baseScales,
+      y: {
+        ...baseScales.y,
+        ticks: {
+          ...baseScales.y.ticks,
+          callback: v => '$' + v.toLocaleString()
+        }
+      }
+    },
+    plugins: {
+      ...baseChartOptions.plugins,
+      tooltip: {
+        ...baseChartOptions.plugins.tooltip,
+        callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString() }
+      }
     }
-    renderSteps();
-    goTo(0);
   }
-  function renderSteps(){
-    const dots = document.querySelectorAll('.step-dot');
-    dots.forEach((d,i)=>{
-      d.classList.toggle('active', i===current);
-      d.classList.toggle('done', i<current);
-    });
-  }
-  function goTo(n){
-    current = n;
-    document.querySelectorAll('.screen').forEach(s=>{
-      s.classList.toggle('active', parseInt(s.dataset.screen)===n);
-    });
-    renderSteps();
-    window.scrollTo({top:0, behavior:'smooth'});
-  }
+});
 
-  // ---- CHECKBOXES ----
-  function toggleCheck(row){
-    const cb = row.querySelector('input[type=checkbox]');
-    cb.checked = !cb.checked;
-    evaluateChecks();
-  }
-  function evaluateChecks(){
-    const c1 = document.getElementById('chk1');
-    const c2 = document.getElementById('chk2');
-    if(c1 && c2){
-      document.getElementById('toSignBtn').disabled = !(c1.checked && c2.checked);
+// Chart 2: Benchmarks — horizontal bar
+new Chart(document.getElementById('chart-benchmarks').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ['High-yield savings', 'Treasury bonds', 'S&P 500 (long-run avg)', 'The Cabin (illustrative)'],
+    datasets: [{
+      data: [4.5, 4.2, 10.0, 24.0],
+      backgroundColor: [
+        'rgba(168, 162, 154, 0.4)',
+        'rgba(168, 162, 154, 0.5)',
+        'rgba(168, 162, 154, 0.6)',
+        GOLD
+      ],
+      borderColor: [
+        'rgba(168, 162, 154, 0.6)',
+        'rgba(168, 162, 154, 0.7)',
+        'rgba(168, 162, 154, 0.8)',
+        GOLD_HI
+      ],
+      borderWidth: 1,
+      barThickness: 28
+    }]
+  },
+  options: {
+    ...baseChartOptions,
+    indexAxis: 'y',
+    plugins: {
+      ...baseChartOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...baseChartOptions.plugins.tooltip,
+        callbacks: { label: ctx => ctx.parsed.x.toFixed(1) + '% annualized' }
+      }
+    },
+    scales: {
+      ...baseScales,
+      x: {
+        ...baseScales.x,
+        ticks: {
+          ...baseScales.x.ticks,
+          callback: v => v + '%'
+        }
+      }
     }
-    const c3 = document.getElementById('chk3');
-    if(c3){ validateSignReady(); }
   }
-  document.addEventListener('change', (e)=>{
-    if(e.target.matches('#chk1,#chk2,#chk3')) evaluateChecks();
+});
+
+// Chart 3: Default Impact — waterfall (stacked bar approach)
+new Chart(document.getElementById('chart-defaults').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: ['Gross return', 'Default losses', 'Protection fees', 'Idle drag', 'Net return'],
+    datasets: [{
+      data: [12.0, -3.5, -1.8, -0.8, 5.9],
+      backgroundColor: (ctx) => {
+        const v = ctx.raw;
+        if (v >= 10) return GOLD;
+        if (v > 0) return GOLD_HI;
+        if (v < -2) return 'rgba(180, 60, 50, 0.7)';
+        if (v < 0) return 'rgba(180, 120, 50, 0.6)';
+        return 'rgba(168, 162, 154, 0.4)';
+      },
+      borderColor: GOLD,
+      borderWidth: 0,
+      barThickness: 44
+    }]
+  },
+  options: {
+    ...baseChartOptions,
+    plugins: {
+      ...baseChartOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...baseChartOptions.plugins.tooltip,
+        callbacks: { label: ctx => (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(1) + '%' }
+      }
+    },
+    scales: {
+      ...baseScales,
+      y: {
+        ...baseScales.y,
+        ticks: {
+          ...baseScales.y.ticks,
+          callback: v => v + '%'
+        }
+      }
+    }
+  }
+});
+
+// Chart 4: Share Price Appreciation
+const shareCtx = document.getElementById('chart-shareprice').getContext('2d');
+const shareGradient = shareCtx.createLinearGradient(0, 0, 0, 280);
+shareGradient.addColorStop(0, 'rgba(249, 229, 150, 0.3)');
+shareGradient.addColorStop(1, 'rgba(212, 175, 55, 0.02)');
+
+new Chart(shareCtx, {
+  type: 'line',
+  data: {
+    labels: ['Founding', 'C2', 'C4', 'C6', 'C8', 'C10', 'C12'],
+    datasets: [{
+      label: 'Share price',
+      data: [25.00, 27.50, 30.25, 33.28, 36.60, 40.26, 44.29],
+      borderColor: GOLD,
+      backgroundColor: shareGradient,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: GOLD_HI,
+      pointBorderColor: GOLD,
+      borderWidth: 2.5
+    }]
+  },
+  options: {
+    ...baseChartOptions,
+    plugins: {
+      ...baseChartOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...baseChartOptions.plugins.tooltip,
+        callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(2) + ' per share' }
+      }
+    },
+    scales: {
+      ...baseScales,
+      y: {
+        ...baseScales.y,
+        ticks: {
+          ...baseScales.y.ticks,
+          callback: v => '$' + v.toFixed(0)
+        }
+      }
+    }
+  }
+});
+
+// Chart 5: Member Equity Projection — 3 lines
+const eqCtx = document.getElementById('chart-equity').getContext('2d');
+new Chart(eqCtx, {
+  type: 'line',
+  data: {
+    labels: ['Start', 'C2', 'C4', 'C6', 'C8', 'C10', 'C12'],
+    datasets: [
+      {
+        label: 'Conservative (60% utilization)',
+        data: [1000, 1144, 1309, 1497, 1713, 1960, 2242],
+        borderColor: GOLD_LO,
+        backgroundColor: 'transparent',
+        tension: 0.4,
+        pointRadius: 2,
+        borderWidth: 1.5
+      },
+      {
+        label: 'Steady (80% utilization)',
+        data: [1000, 1197, 1433, 1715, 2052, 2456, 2939],
+        borderColor: GOLD,
+        backgroundColor: 'transparent',
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: GOLD_HI,
+        borderWidth: 2
+      },
+      {
+        label: 'Full (100% utilization)',
+        data: [1000, 1254, 1573, 1973, 2475, 3105, 3895],
+        borderColor: GOLD_HI,
+        backgroundColor: 'transparent',
+        borderDash: [3, 3],
+        tension: 0.4,
+        pointRadius: 2,
+        borderWidth: 1.5
+      }
+    ]
+  },
+  options: {
+    ...baseChartOptions,
+    scales: {
+      ...baseScales,
+      y: {
+        ...baseScales.y,
+        ticks: {
+          ...baseScales.y.ticks,
+          callback: v => '$' + v.toLocaleString()
+        }
+      }
+    },
+    plugins: {
+      ...baseChartOptions.plugins,
+      tooltip: {
+        ...baseChartOptions.plugins.tooltip,
+        callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString() }
+      }
+    }
+  }
+});
+
+// Chart 6: Diversification Heat Map (bubble-style)
+const heatCtx = document.getElementById('chart-heatmap').getContext('2d');
+const concentrationLevels = ['1 borrower', '3 borrowers', '5 borrowers', '8 borrowers', '12 borrowers'];
+const heatData = [
+  { x: 0, y: 18.5, r: 28 },  // 1 borrower: high variance, high nominal return
+  { x: 1, y: 14.2, r: 22 },
+  { x: 2, y: 12.8, r: 18 },
+  { x: 3, y: 11.9, r: 14 },
+  { x: 4, y: 11.5, r: 10 }   // 12 borrowers: lower variance, smoother return
+];
+new Chart(heatCtx, {
+  type: 'bubble',
+  data: {
+    datasets: [{
+      label: 'Risk-adjusted return',
+      data: heatData,
+      backgroundColor: (ctx) => {
+        const r = ctx.raw.r;
+        const alpha = Math.max(0.2, r / 30);
+        return `rgba(212, 175, 55, ${alpha})`;
+      },
+      borderColor: GOLD_HI,
+      borderWidth: 1
+    }]
+  },
+  options: {
+    ...baseChartOptions,
+    plugins: {
+      ...baseChartOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...baseChartOptions.plugins.tooltip,
+        callbacks: {
+          label: ctx => {
+            const d = ctx.raw;
+            return concentrationLevels[d.x] + ': ~' + d.y.toFixed(1) + '% return · bubble size = variance';
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ...baseScales.x,
+        ticks: {
+          ...baseScales.x.ticks,
+          callback: (v, i) => concentrationLevels[i] || ''
+        },
+        title: {
+          display: true,
+          text: 'Number of borrowers in the book',
+          color: CREAM_DIM,
+          font: { family: 'Cormorant SC', size: 11 }
+        }
+      },
+      y: {
+        ...baseScales.y,
+        ticks: {
+          ...baseScales.y.ticks,
+          callback: v => v + '%'
+        },
+        title: {
+          display: true,
+          text: 'Risk-adjusted cycle return',
+          color: CREAM_DIM,
+          font: { family: 'Cormorant SC', size: 11 }
+        }
+      }
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// SEAT COUNTER — subtle pulse on the number
+// ═══════════════════════════════════════════════════════════
+const seatsEl = document.getElementById('seats-remaining');
+let seatsDisplayed = 0;
+const seatsTarget = 4;
+const seatObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      let i = 0;
+      const interval = setInterval(() => {
+        seatsEl.textContent = i;
+        if (i >= seatsTarget) { clearInterval(interval); return; }
+        i++;
+      }, 200);
+      seatObserver.unobserve(entry.target);
+    }
   });
-
-  function tryGoSign(){ goTo(6); }
-
-  // ---- SIGNATURE VALIDATION ----
-  function validateSignReady(){
-    const name = document.getElementById('fullName').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const role = document.getElementById('role').value;
-    const sig = document.getElementById('signature').value.trim();
-    const c3 = document.getElementById('chk3').checked;
-    const sigErr = document.getElementById('sigErr');
-
-    const sigMatches = name && sig && name.toLowerCase() === sig.toLowerCase();
-    sigErr.style.display = (sig && !sigMatches) ? 'block' : 'none';
-
-    const ready = name && email && role && sigMatches && c3;
-    document.getElementById('submitBtn').disabled = !ready;
-  }
-  ['fullName','email','role','signature'].forEach(id=>{
-    document.getElementById(id).addEventListener('input', validateSignReady);
-    document.getElementById(id).addEventListener('change', validateSignReady);
-  });
-
-  // ---- SUBMIT ----
-  function submitForm(){
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.textContent = 'Submitting…';
-
-    const nowIso = new Date().toISOString();
-    document.getElementById('dateSigned').value = nowIso;
-    document.getElementById('fullAgreementText').value =
-      document.querySelector('.legal-block').innerText.replace(/\s+/g,' ').trim();
-
-    const form = document.getElementById('signForm');
-    const data = new FormData(form);
-    const record = Object.fromEntries(data.entries());
-    record.date_signed = nowIso;
-    record.submitted_via = 'onboarding-v2';
-
-    // Primary: write directly to Firestore so we never lose a signup, even if Formspree fails.
-    db.collection('signups').add(record).then(() => {
-      document.getElementById('signedNameDisplay').textContent = document.getElementById('fullName').value.trim();
-      goTo(7);
-
-      // Best-effort: also notify via Formspree, but don't block confirmation on it.
-      fetch('https://formspree.io/f/xzdngbln', {
-        method: 'POST',
-        body: data,
-        headers: { 'Accept': 'application/json' }
-      }).catch(()=>{ /* Firestore already has the record; Formspree is just a notification */ });
-
-    }).catch((err) => {
-      btn.disabled = false;
-      btn.textContent = 'Sign & Submit';
-      alert('Submission failed to save (' + (err && err.message ? err.message : 'connection error') + '). Please check your connection and try again.');
-    });
-  }
+}, { threshold: 0.4 });
+seatObserver.observe(seatsEl);
 </script>
 
 </body>
