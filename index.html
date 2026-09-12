@@ -1592,15 +1592,6 @@ footer .footer-fine {
         <div class="chart-footnote">Illustrative: $1,000 initial stake, hypothetical 12% per-cycle return, 12 cycles. Withdrawn capital earns nothing further.</div>
       </div>
 
-      <!-- Chart 2: Cycle Return vs Benchmarks -->
-      <div class="chart-card reveal reveal-delay-1">
-        <span class="label-caps chart-label">Comparative Yield</span>
-        <h3>Against Other Homes for Capital</h3>
-        <p class="chart-sub">Annualized yield of various instruments. The Cabin's structure favors velocity.</p>
-        <div class="chart-wrap"><canvas id="chart-benchmarks"></canvas></div>
-        <div class="chart-footnote">Illustrative annualized yields. Savings and treasury rates reflect typical prevailing ranges; equity benchmark reflects long-run historical average.</div>
-      </div>
-
       <!-- Chart 3: Default Impact (Waterfall) -->
       <div class="chart-card reveal">
         <span class="label-caps chart-label">The Cost of Defaults</span>
@@ -1828,20 +1819,22 @@ footer .footer-fine {
         <div class="waitlist-seal">HC</div>
 
         <div class="waitlist-content">
-          <form class="waitlist-form" id="waitlist-form" onsubmit="return submitWaitlist(event)">
+          <form class="waitlist-form" id="waitlist-form" onsubmit="return submitWaitlist(event)" action="https://formspree.io/f/xzdngbln" method="POST">
             <div>
               <div class="field-label">Your Name</div>
-              <input type="text" id="wl-name" required placeholder="As you would wish to be addressed" />
+              <input type="text" id="wl-name" name="name" required placeholder="As you would wish to be addressed" />
             </div>
             <div>
               <div class="field-label">Email</div>
-              <input type="email" id="wl-email" required placeholder="A private address we may use" />
+              <input type="email" id="wl-email" name="email" required placeholder="A private address we may use" />
             </div>
             <div>
               <div class="field-label">The Member Who Referred You</div>
-              <input type="text" id="wl-referrer" placeholder="Optional, but considered" />
+              <input type="text" id="wl-referrer" name="referrer" placeholder="Optional, but considered" />
             </div>
-            <button type="submit">Place Your Name Forward</button>
+            <input type="hidden" name="_subject" value="New Hustler's Cabin waitlist submission" />
+            <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true" />
+            <button type="submit" id="waitlist-submit">Place Your Name Forward</button>
           </form>
         </div>
 
@@ -2077,15 +2070,55 @@ const revealObserver = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
 // ═══════════════════════════════════════════════════════════
-// WAITLIST FORM — envelope opens on submit
+// WAITLIST FORM — submits to Formspree, then plays the envelope open
 // ═══════════════════════════════════════════════════════════
-function submitWaitlist(e) {
+async function submitWaitlist(e) {
   e.preventDefault();
+  const form = e.target;
   const stage = document.getElementById('waitlist-stage');
-  stage.classList.add('opened');
-  setTimeout(() => {
-    stage.classList.add('submitted');
-  }, 1400);
+  const submitBtn = document.getElementById('waitlist-submit');
+
+  // Honeypot guard — if the hidden field was filled by a bot, silently ignore.
+  const honeypot = form.querySelector('[name="_gotcha"]');
+  if (honeypot && honeypot.value) return false;
+
+  // Lock the button while the request is in flight.
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sealing…';
+  }
+
+  try {
+    const response = await fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name:    document.getElementById('wl-name').value,
+        email:   document.getElementById('wl-email').value,
+        referrer: document.getElementById('wl-referrer').value || '(not provided)',
+        _subject: "New Hustler's Cabin waitlist submission"
+      })
+    });
+
+    if (response.ok) {
+      // Success — play the envelope-opening animation.
+      stage.classList.add('opened');
+      setTimeout(() => {
+        stage.classList.add('submitted');
+      }, 1400);
+    } else {
+      throw new Error('Formspree responded with ' + response.status);
+    }
+  } catch (err) {
+    // Network or server error — fall back to standard form POST.
+    // This still delivers the submission to Formspree.
+    form.removeAttribute('onsubmit');
+    form.submit();
+    return true;
+  }
   return false;
 }
 
@@ -2194,53 +2227,6 @@ new Chart(compoundingCtx, {
       tooltip: {
         ...baseChartOptions.plugins.tooltip,
         callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString() }
-      }
-    }
-  }
-});
-
-// Chart 2: Benchmarks — horizontal bar
-new Chart(document.getElementById('chart-benchmarks').getContext('2d'), {
-  type: 'bar',
-  data: {
-    labels: ['High-yield savings', 'Treasury bonds', 'S&P 500 (long-run avg)', 'The Cabin (illustrative)'],
-    datasets: [{
-      data: [4.5, 4.2, 10.0, 24.0],
-      backgroundColor: [
-        'rgba(168, 162, 154, 0.4)',
-        'rgba(168, 162, 154, 0.5)',
-        'rgba(168, 162, 154, 0.6)',
-        GOLD
-      ],
-      borderColor: [
-        'rgba(168, 162, 154, 0.6)',
-        'rgba(168, 162, 154, 0.7)',
-        'rgba(168, 162, 154, 0.8)',
-        GOLD_HI
-      ],
-      borderWidth: 1,
-      barThickness: 28
-    }]
-  },
-  options: {
-    ...baseChartOptions,
-    indexAxis: 'y',
-    plugins: {
-      ...baseChartOptions.plugins,
-      legend: { display: false },
-      tooltip: {
-        ...baseChartOptions.plugins.tooltip,
-        callbacks: { label: ctx => ctx.parsed.x.toFixed(1) + '% annualized' }
-      }
-    },
-    scales: {
-      ...baseScales,
-      x: {
-        ...baseScales.x,
-        ticks: {
-          ...baseScales.x.ticks,
-          callback: v => v + '%'
-        }
       }
     }
   }
